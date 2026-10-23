@@ -64,13 +64,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { day: 'Sun', revenue: 2400, orders: 30, heightPct: 75 },
   ];
 
-  // Category performance sample data
-  const sampleCategoryShare = [
-    { name: 'Snacks & Chips', share: '38%', count: 48, icon: '🍿', color: '#636B2F' },
-    { name: 'Cold Beverages', share: '28%', count: 35, icon: '🥤', color: '#889343' },
-    { name: 'Chocolates & Sweets', share: '18%', count: 23, icon: '🍫', color: '#BAC095' },
-    { name: 'Biscuits & Cookies', share: '16%', count: 20, icon: '🍪', color: '#D4DE95' },
-  ];
+  // Dynamic Category Share distribution derived from live products
+  const categoryCounts: Record<string, number> = {};
+  products.forEach((p) => {
+    categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+  });
+  const totalCatCount = products.length || 1;
+  const categoryIcons: Record<string, string> = {
+    Snacks: '🍿',
+    Drinks: '🥤',
+    Chocolates: '🍫',
+    Biscuits: '🍪',
+    Combos: '🍱',
+    Others: '📦',
+  };
+  const categoryColors: Record<string, string> = {
+    Snacks: '#636B2F',
+    Drinks: '#889343',
+    Chocolates: '#BAC095',
+    Biscuits: '#D4DE95',
+    Combos: '#A3B18A',
+    Others: '#588157',
+  };
+  const categoryShare = Object.entries(categoryCounts).map(([catName, count]) => {
+    const pct = Math.round((count / totalCatCount) * 100);
+    return {
+      name: catName,
+      share: `${pct}%`,
+      count,
+      icon: categoryIcons[catName] || '📦',
+      color: categoryColors[catName] || '#636B2F',
+    };
+  });
 
   const inUseLockers = lockers.filter((l) => l.status === 'occupied' || l.status === 'reserved').length;
   const recentOrders = orders.slice(0, 5);
@@ -486,36 +511,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-base font-black text-[#3D4127]">Category Share</h3>
-                <p className="text-xs text-[#3D4127]/60">Product sales mix (sample)</p>
+                <p className="text-xs text-[#3D4127]/60">Product distribution from database</p>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#F0F2E5] text-[#3D4127] border border-[#BAC095]/40">
-                UI Mockup
+                Live Catalog Share
               </span>
             </div>
 
             <div className="space-y-4 pt-2">
-              {sampleCategoryShare.map((cat) => (
-                <div key={cat.name} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs font-bold text-[#3D4127]">
-                    <span className="flex items-center gap-1.5">
-                      <span>{cat.icon}</span>
-                      <span>{cat.name}</span>
-                    </span>
-                    <span>{cat.share}</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-[#F0F2E5] overflow-hidden">
-                    <div
-                      style={{ width: cat.share, backgroundColor: cat.color }}
-                      className="h-full rounded-full transition-all duration-500"
-                    />
-                  </div>
+              {categoryShare.length === 0 ? (
+                <div className="py-6 text-center text-xs text-[#3D4127]/60">
+                  No active categories loaded.
                 </div>
-              ))}
+              ) : (
+                categoryShare.map((cat) => (
+                  <div key={cat.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#3D4127]">
+                      <span className="flex items-center gap-1.5">
+                        <span>{cat.icon}</span>
+                        <span>{cat.name}</span>
+                      </span>
+                      <span>{cat.share}</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-[#F0F2E5] overflow-hidden">
+                      <div
+                        style={{ width: cat.share, backgroundColor: cat.color }}
+                        className="h-full rounded-full transition-all duration-500"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           <div className="mt-6 pt-3 border-t border-[#E3E6D3] text-[11px] text-[#3D4127]/60">
-            Chips and Namkeen account for highest kiosk conversion velocity.
+            Real-time category mix dynamically computed from PostgreSQL catalog.
           </div>
         </div>
       </div>
@@ -553,7 +584,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E3E6D3]/60">
-              {recentOrders.map((ord) => (
+              {recentOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-xs text-[#3D4127]/60 font-medium">
+                    No recent kiosk orders found in PostgreSQL database. Click "Simulate Order" above to generate a new transaction.
+                  </td>
+                </tr>
+              ) : (
+                recentOrders.map((ord) => (
                 <tr key={ord.id} className="hover:bg-[#FAFBF5] transition-colors">
                   <td className="py-3 px-3 font-black text-[#3D4127]">{ord.orderNumber}</td>
                   <td className="py-3 px-3 font-bold text-[#3D4127]">
@@ -593,7 +631,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

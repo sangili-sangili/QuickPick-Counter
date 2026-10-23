@@ -83,6 +83,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             alt={product.name}
             className="w-full h-full object-contain filter group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
             loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/images/lays.jpg';
+            }}
           />
 
           {isOutOfStock && (

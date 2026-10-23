@@ -5,7 +5,8 @@ export interface Product {
   regularPricePaise?: number;
   offerPricePaise?: number;
   stock: number;
-  category: 'Snacks' | 'Drinks' | 'Chocolates' | 'Biscuits' | 'Combos' | 'Others';
+  category: string;
+  categoryId?: string;
   image: string;
   galleryImages?: string[];
   description?: string;
@@ -34,6 +35,7 @@ export interface OrderTimelineEvent {
 export interface Order {
   id: string;
   orderNumber: string;
+  customerId?: string;
   items: CartItem[];
   totalPaise: number;
   status: OrderStatus;
@@ -58,11 +60,19 @@ export type ScreenState = 'catalog' | 'view_all' | 'payment' | 'success';
 
 export interface CustomerUser {
   id: string;
+  customerId?: string;
   name: string;
   email: string;
   phone: string;
   avatar?: string;
-  membershipTier?: string;
+  membershipTier?: string; // 'Gold Member' | 'Silver Member' | 'Bronze Member'
+  balancePaise?: number;
+  balanceRupees?: number;
+  ordersCount?: number;
+  totalSpentPaise?: number;
+  lastOrderDate?: string;
+  createdAt?: string;
+  status?: 'active' | 'inactive';
 }
 
 export interface CategoryItem {

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Plus, Edit3, Trash2, Eye } from 'lucide-react';
-import { Product } from '../../types';
+import { Plus, Edit3, Trash2, Eye, AlertTriangle } from 'lucide-react';
+import { Product, CategoryItem } from '../../types';
 import { formatRupees } from '../../utils/format';
 import { AdminTable, TableColumn } from './AdminTable';
 import { AdminProductDetailModal } from './AdminProductDetailModal';
 
 interface AdminProductsProps {
   products: Product[];
+  categories?: CategoryItem[];
   onOpenAddModal: () => void;
   onOpenEditModal: (product: Product) => void;
   onDeleteProduct: (productId: string) => void;
@@ -16,6 +17,7 @@ interface AdminProductsProps {
 
 export const AdminProducts: React.FC<AdminProductsProps> = ({
   products,
+  categories = [],
   onOpenAddModal,
   onOpenEditModal,
   onDeleteProduct,
@@ -63,7 +65,14 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
           className="w-11 h-11 rounded-xl overflow-hidden bg-[#F0F2E5] border border-[#BAC095]/40 flex items-center justify-center p-1 cursor-pointer hover:ring-2 hover:ring-[#636B2F]/30 transition-all"
           title="Click to view photo gallery"
         >
-          <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
+          <img
+            src={p.image}
+            alt={p.name}
+            className="w-full h-full object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/images/lays.jpg';
+            }}
+          />
         </div>
       ),
     },
@@ -254,11 +263,15 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
           { label: 'Low Stock Only (≤ 5)', value: 'low_stock' },
           { label: 'Active Catalog', value: 'active' },
           { label: 'Inactive Items', value: 'inactive' },
-          { label: 'Snacks', value: 'snacks' },
-          { label: 'Drinks', value: 'drinks' },
-          { label: 'Chocolates', value: 'chocolates' },
-          { label: 'Biscuits', value: 'biscuits' },
-          { label: 'Combos', value: 'combos' },
+          ...(categories && categories.length > 0
+            ? categories.map((c) => ({ label: c.name, value: c.name.toLowerCase() }))
+            : [
+                { label: 'Snacks', value: 'snacks' },
+                { label: 'Drinks', value: 'drinks' },
+                { label: 'Chocolates', value: 'chocolates' },
+                { label: 'Biscuits', value: 'biscuits' },
+                { label: 'Combos', value: 'combos' },
+              ]),
         ]}
         selectedFilter={selectedFilter}
         onFilterChange={setSelectedFilter}
@@ -297,19 +310,57 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
+
             <div>
               <h3 className="text-base font-black text-[#3D4127]">Delete Product?</h3>
               <p className="text-xs text-[#3D4127]/70 mt-1">
                 Are you sure you want to delete{' '}
-                <strong className="text-[#3D4127]">"{productToDelete.name}"</strong>? It will be
-                immediately removed from customer kiosk dispensers.
+                <strong className="text-[#3D4127]">"{productToDelete.name}"</strong>?
               </p>
             </div>
+
+            {/* Product Details Preview */}
+            <div className="p-3 rounded-2xl bg-[#F8F9F3] border border-[#BAC095]/40 flex items-center gap-3 text-left">
+              <div className="w-12 h-12 rounded-xl overflow-hidden bg-white border border-[#BAC095]/40 shrink-0 flex items-center justify-center p-1">
+                <img
+                  src={productToDelete.image}
+                  alt={productToDelete.name}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/lays.jpg';
+                  }}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-black text-[#3D4127] truncate">
+                  {productToDelete.name}
+                </div>
+                <div className="text-[10px] text-[#3D4127]/70 flex items-center gap-2">
+                  <span>{productToDelete.category}</span>
+                  <span>•</span>
+                  <span>{formatRupees(productToDelete.pricePaise)}</span>
+                  <span>•</span>
+                  <span>{productToDelete.stock} in stock</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Foreign Key Warning Banner */}
+            <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-1">
+              <div className="font-bold flex items-center gap-1.5 text-xs text-amber-900">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>Relational Integrity Guard</span>
+              </div>
+              <p className="text-[11px] text-amber-800/80 leading-relaxed">
+                If this product has existing sales orders or active customer cart items, the system service will block deletion to protect financial audit history.
+              </p>
+            </div>
+
             <div className="flex items-center justify-center gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setProductToDelete(null)}
-                className="px-4 py-2 rounded-xl border border-[#BAC095]/60 text-xs font-bold text-[#3D4127] hover:bg-stone-50 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-[#BAC095]/60 text-xs font-bold text-[#3D4127] hover:bg-stone-50 cursor-pointer flex-1"
               >
                 Cancel
               </button>
@@ -317,10 +368,9 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
                 type="button"
                 onClick={() => {
                   onDeleteProduct(productToDelete.id);
-                  if (onToast) onToast('info', `Removed "${productToDelete.name}" from inventory.`);
                   setProductToDelete(null);
                 }}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer active:scale-95 shadow-xs"
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer active:scale-95 shadow-xs flex-1 transition-all"
               >
                 Yes, Delete
               </button>

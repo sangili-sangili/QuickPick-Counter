@@ -6,3 +6,209 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum OrderStatus {
+  UNPAID
+  PAID
+  EXPIRED
+  NEEDS_REVIEW
+  CLAIMED
+}
+
+enum LockerStatus {
+  AVAILABLE
+  RESERVED
+  OCCUPIED
+  OUT_OF_SERVICE
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  password      String         // Bcrypt hashed password
+  role          UserRole       @default(CUSTOMER)
+  avatar        String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  customer      Customer?
+  notifications Notification[]
+  wishlist      Wishlist[]
+  cartItems     AddToCart[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  image       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id                String      @id @default(cuid())
+  name              String
+  subtitle          String?
+  description       String?
+  pricePaise        Int         // Active selling price in paise
+  regularPricePaise Int?        // Regular / MSRP price in paise
+  offerPricePaise   Int?        // Offer / Promotional price in paise
+  physicalStock     Int         @default(0) // Physical units in dispenser
+  image             String
+  galleryImages     String[]    @default([])
+  badge             String?
+  badgeType         String?     // 'red' | 'amber' | 'green'
+  rating            Float       @default(4.8)
+  ratingCount       Int         @default(0)
+  isActive          Boolean     @default(true)
+  categoryId        String?
+  category          Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  orderItems        OrderItem[]
+  wishlistItems     Wishlist[]
+  cartItems         AddToCart[]
+
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+model Customer {
+  id             String    @id @default(cuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String    // Mirror / display name
+  email          String    @unique
+  phone          String?
+  balancePaise   Int       @default(0) // Stored in paise (e.g. ₹500.00 = 50000 paise)
+  membershipTier String    @default("Bronze Member")
+  avatar         String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  orders         Order[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([phone])
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  orderNumber     String         @unique
+  customerId      String?
+  customer        Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  totalPaise      Int
+  status          OrderStatus    @default(UNPAID)
+  expiresAt       DateTime       // Current time + 120 seconds
+  lockerNumber    String?
+  pickupClaimedAt DateTime?
+  claimedBy       String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  items           OrderItem[]
+  webhookEvents   WebhookEvent[]
+  locker          SmartLocker?   @relation(fields: [lockerNumber], references: [number])
+
+  @@index([customerId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([lockerNumber])
+}
+
+model OrderItem {
+  id             String   @id @default(cuid())
+  orderId        String
+  productId      String
+  quantity       Int
+  unitPricePaise Int
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model SmartLocker {
+  id           String       @id @default(cuid())
+  number       String       @unique // 'L-01' to 'L-12'
+  name         String?      // Display name
+  status       LockerStatus @default(AVAILABLE)
+  temperatureC Int          @default(21)
+  doorState    String       @default("locked") // 'locked' | 'unlocked' | 'open'
+  assignedAt   DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  orders       Order[]
+
+  @@index([status])
+}
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  eventId     String   @unique // For strict idempotency
+  orderId     String?
+  eventType   String   // 'payment.captured', 'payment.failed'
+  amountPaise Int?
+  signature   String
+  rawPayload  String   @db.Text
+  status      String   // 'PROCESSED' | 'AMOUNT_MISMATCH' | 'LATE_PAYMENT' | 'IGNORED'
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@index([eventId])
+  @@index([orderId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info") // 'info' | 'warning' | 'success' | 'error'
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
+model AddToCart {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}

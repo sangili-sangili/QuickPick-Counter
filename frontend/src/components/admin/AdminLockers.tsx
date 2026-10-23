@@ -11,8 +11,9 @@ import {
   Clock,
   Wrench,
   Sparkles,
+  FileSpreadsheet,
 } from 'lucide-react';
-import { AdminLocker } from '../../data/mockAdminData';
+import { AdminLocker } from '../../types';
 
 interface AdminLockersProps {
   lockers: AdminLocker[];
@@ -52,6 +53,33 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
   });
 
 
+  const handleExportLockers = () => {
+    const headers = ['"S.No."', '"Compartment"', '"Display Name"', '"Status"', '"Door State"', '"Temperature (C)"', '"Last Assigned"'].join(',');
+    const rows = (filteredLockers.length > 0 ? filteredLockers : lockers).map((l, idx) => {
+      return [
+        `"${idx + 1}"`,
+        `"${l.number}"`,
+        `"${(l.name || l.number).replace(/"/g, '""')}"`,
+        `"${l.status.toUpperCase()}"`,
+        `"${l.doorState || 'locked'}"`,
+        `"${l.temperatureC || 21}"`,
+        `"${l.assignedAt || 'None'}"`,
+      ].join(',');
+    });
+    const BOM = '\uFEFF';
+    const csvString = BOM + [headers, ...rows].join('\r\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', `QuickPick_Lockers_Telemetry_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
+    if (onToast) onToast('success', 'Exported smart lockers telemetry to CSV.');
+  };
+
   return (
     <div className="space-y-6 select-none">
       {/* Top Header & Emergency Override */}
@@ -71,8 +99,17 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
           </p>
         </div>
 
-        {/* Top Emergency Override Button */}
+        {/* Top Action Buttons: Export & Emergency Override */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportLockers}
+            className="px-3.5 py-2 rounded-xl bg-white border border-[#BAC095]/60 hover:bg-[#F8F9F3] text-[#3D4127] font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            title="Export 12-locker telemetry to CSV"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-[#636B2F]" />
+            <span>Export CSV</span>
+          </button>
           <button
             type="button"
             onClick={() => {

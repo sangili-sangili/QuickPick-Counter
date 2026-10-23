@@ -6,6 +6,7 @@ import { CategoryTabs, Category } from './components/customer/CategoryTabs';
 import { ProductCard } from './components/customer/ProductCard';
 import { ProductDetailsModal } from './components/customer/ProductDetailsModal';
 import { AuthModal } from './components/customer/AuthModal';
+import { CustomerProfileModal } from './components/customer/CustomerProfileModal';
 import { CartModal } from './components/customer/CartPanel';
 import { ViewAllScreen } from './components/customer/ViewAllScreen';
 import { WishlistModal } from './components/customer/WishlistModal';
@@ -45,6 +46,7 @@ export default function App() {
     }
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Product Details Modal state
   const [selectedProductForModal, setSelectedProductForModal] = useState<Product | null>(null);
@@ -376,6 +378,7 @@ export default function App() {
         onOpenCart={() => setIsCartModalOpen(true)}
         onOpenWishlist={() => setIsWishlistModalOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
         onLogout={handleLogout}
         onGoHome={() => navigate('/')}
         onGoToAdmin={() => navigate('/admin')}
@@ -592,6 +595,17 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
       />
+
+      {/* Customer Profile & Orders Modal */}
+      {currentUser && (
+        <CustomerProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          currentUser={currentUser}
+          orders={currentOrder ? [currentOrder] : []}
+          onLogout={handleLogout}
+        />
+      )}
 
       {/* Cart Modal Popup */}
       <CartModal

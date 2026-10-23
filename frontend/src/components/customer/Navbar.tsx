@@ -9,6 +9,7 @@ interface NavbarProps {
   onOpenCart: () => void;
   onOpenWishlist: () => void;
   onOpenAuth: () => void;
+  onOpenProfile?: () => void;
   onLogout: () => void;
   onGoHome: () => void;
   onGoToAdmin?: () => void;
@@ -21,6 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart,
   onOpenWishlist,
   onOpenAuth,
+  onOpenProfile,
   onLogout,
   onGoHome,
   onGoToAdmin,
@@ -130,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {/* Profile Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-60 bg-white rounded-2xl p-2.5 shadow-xl border border-[#EFE8DE] animate-in fade-in zoom-in-95 duration-150 z-50">
+                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl p-2.5 shadow-xl border border-[#EFE8DE] animate-in fade-in zoom-in-95 duration-150 z-50">
                   <div className="p-3 bg-[#FAF5EF] rounded-xl border border-[#EFE8DE] mb-2">
                     <p className="text-xs font-black text-stone-900 truncate">{currentUser.name}</p>
                     <p className="text-[10px] text-stone-400 font-medium truncate mt-0.5">
@@ -143,6 +145,17 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </span>
                     </div>
                   </div>
+
+                  <button
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      onOpenProfile?.();
+                    }}
+                    className="w-full px-3 py-2 rounded-xl text-left text-xs font-bold text-stone-800 hover:bg-[#FAF5EF] flex items-center gap-2 transition-colors cursor-pointer"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+                    <span>My Account & Orders</span>
+                  </button>
 
                   <button
                     onClick={() => {

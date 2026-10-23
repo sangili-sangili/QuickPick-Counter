@@ -1,49 +1,151 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Check, Upload, Trash2, Plus, Sparkles, Image as ImageIcon } from 'lucide-react';
-import { Product } from '../../types';
+import { Product, CategoryItem } from '../../types';
+import { getAdminCategoriesApi, getAdminProductsApi } from '../../services/adminApi';
 
 interface AdminProductModalProps {
   product: Product | null; // null if adding new product
   isOpen: boolean;
   onClose: () => void;
   onSaveProduct: (product: Product) => void;
+  categories?: CategoryItem[];
+  products?: Product[];
 }
-
-const PRESET_SNACK_PHOTOS = [
-  { label: "Lay's", path: '/images/lays.jpg' },
-  { label: 'Coke', path: '/images/coke.jpg' },
-  { label: 'KitKat', path: '/images/kitkat.jpg' },
-  { label: 'Oreo', path: '/images/oreo.jpg' },
-  { label: 'Pringles', path: '/images/pringles.jpg' },
-  { label: 'Red Bull', path: '/images/redbull.jpg' },
-];
 
 export const AdminProductModal: React.FC<AdminProductModalProps> = ({
   product,
   isOpen,
   onClose,
   onSaveProduct,
+  categories = [],
+  products = [],
 }) => {
+  const [loadedCategories, setLoadedCategories] = useState<CategoryItem[]>(categories);
+  const [loadedProducts, setLoadedProducts] = useState<Product[]>(products);
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<Product['category']>('Snacks');
+  const [category, setCategory] = useState<string>('Snacks');
+  const [categoryId, setCategoryId] = useState<string>('');
   const [regularPriceRupees, setRegularPriceRupees] = useState('35');
   const [offerPriceRupees, setOfferPriceRupees] = useState('30');
   const [stock, setStock] = useState('10');
   const [subtitle, setSubtitle] = useState('');
   const [badge, setBadge] = useState('');
-  const [image, setImage] = useState('/images/lays.jpg');
+  const [image, setImage] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [imageHasError, setImageHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const primaryFileInputRef = useRef<HTMLInputElement>(null);
   const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync / fetch categories from backend category model
   useEffect(() => {
+    if (categories && categories.length > 0) {
+      setLoadedCategories(categories);
+    } else {
+      getAdminCategoriesApi().then((cats) => {
+        if (cats && cats.length > 0) {
+          setLoadedCategories(cats);
+        }
+      });
+    }
+  }, [categories, isOpen]);
+
+  // Sync / fetch products from database to extract real photos
+  useEffect(() => {
+    if (products && products.length > 0) {
+      setLoadedProducts(products);
+    } else {
+      getAdminProductsApi().then((prods) => {
+        if (prods && prods.length > 0) {
+          setLoadedProducts(prods);
+        }
+      });
+    }
+  }, [products, isOpen]);
+
+// Helper to read file as persistent Base64 data URL
+const readFileAsDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+const isValidPersistentImageUrl = (url?: string | null): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  if (url.startsWith('blob:')) return false; // Exclude session-bound temporary blob URLs
+  return (
+    url.startsWith('/images/') ||
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:image/')
+  );
+};
+
+const getCleanPresetLabel = (name: string): string => {
+  const trimmed = name.trim();
+  if (/^cocoa/i.test(trimmed)) return 'Cocoa';
+  if (/^red\s*bull/i.test(trimmed)) return 'Red Bull';
+  if (/^(coca-cola|coke)/i.test(trimmed)) return 'Coke';
+  if (/^lay'?s/i.test(trimmed)) return "Lay's";
+  if (/^kit\s*kat/i.test(trimmed)) return 'KitKat';
+  if (/^oreo/i.test(trimmed)) return 'Oreo';
+  if (/^pringles/i.test(trimmed)) return 'Pringles';
+  return trimmed.split(' ')[0].replace(/[^a-zA-Z0-9']/g, '') || 'Snack';
+};
+
+const STANDARD_LIBRARY_PRESETS = [
+  { label: "Lay's", path: '/images/lays.jpg' },
+  { label: 'Coke', path: '/images/coke.jpg' },
+  { label: 'KitKat', path: '/images/kitkat.jpg' },
+  { label: 'Cocoa', path: '/images/cocoa.jpg' },
+  { label: 'Oreo', path: '/images/oreo.jpg' },
+  { label: 'Pringles', path: '/images/pringles.jpg' },
+  { label: 'Red Bull', path: '/images/redbull.jpg' },
+];
+
+  // Derive preset snack photos dynamically from database products with guaranteed unique items
+  const dbPresetPhotos = useMemo(() => {
+    const seenLabels = new Set<string>();
+    const seenPaths = new Set<string>();
+    const photos: { label: string; path: string }[] = [];
+
+    // 1. First extract unique photos from database products
+    loadedProducts.forEach((p) => {
+      const img = p.image;
+      if (isValidPersistentImageUrl(img)) {
+        const label = getCleanPresetLabel(p.name);
+        if (!seenPaths.has(img) && !seenLabels.has(label)) {
+          seenPaths.add(img);
+          seenLabels.add(label);
+          photos.push({ label, path: img });
+        }
+      }
+    });
+
+    // 2. Ensure standard library presets are available so admin has complete snack options
+    STANDARD_LIBRARY_PRESETS.forEach((std) => {
+      if (!seenPaths.has(std.path) && !seenLabels.has(std.label)) {
+        seenPaths.add(std.path);
+        seenLabels.add(std.label);
+        photos.push(std);
+      }
+    });
+
+    return photos;
+  }, [loadedProducts]);
+
+  useEffect(() => {
+    setImageHasError(false);
     if (product) {
       setName(product.name);
       setCategory(product.category);
+      setCategoryId(product.categoryId || '');
       const reg = product.regularPricePaise ? product.regularPricePaise : product.pricePaise;
       const off = product.offerPricePaise ? product.offerPricePaise : product.pricePaise;
       setRegularPriceRupees((reg / 100).toString());
@@ -51,43 +153,62 @@ export const AdminProductModal: React.FC<AdminProductModalProps> = ({
       setStock(product.stock.toString());
       setSubtitle(product.subtitle || '');
       setBadge(product.badge || '');
-      setImage(product.image || '/images/lays.jpg');
-      setGalleryImages(product.galleryImages || []);
+      const initialImg = isValidPersistentImageUrl(product.image)
+        ? product.image
+        : (dbPresetPhotos[0]?.path || '/images/lays.jpg');
+      setImage(initialImg);
+      setGalleryImages(
+        (product.galleryImages || []).filter((g) => isValidPersistentImageUrl(g))
+      );
       setDescription(product.description || '');
       setIsActive(product.isActive !== false);
     } else {
       setName('');
-      setCategory('Snacks');
+      const defaultCat = (loadedCategories && loadedCategories.length > 0 ? loadedCategories[0].name : 'Snacks');
+      const defaultCatId = (loadedCategories && loadedCategories.length > 0 ? loadedCategories[0].id : '');
+      setCategory(defaultCat);
+      setCategoryId(defaultCatId);
       setRegularPriceRupees('40');
       setOfferPriceRupees('35');
       setStock('12');
       setSubtitle('');
       setBadge('');
-      setImage('/images/lays.jpg');
+      setImage(dbPresetPhotos[0]?.path || '/images/lays.jpg');
       setGalleryImages([]);
       setDescription('');
       setIsActive(true);
     }
     setErrorMessage('');
-  }, [product, isOpen]);
+  }, [product, isOpen, loadedCategories, dbPresetPhotos]);
 
   if (!isOpen) return null;
 
-  // Primary image file handler
-  const handlePrimaryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Primary image file handler (converts to persistent Base64 Data URL)
+  const handlePrimaryFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setImage(url);
+      try {
+        const base64Url = await readFileAsDataUrl(file);
+        setImage(base64Url);
+        setImageHasError(false);
+      } catch (err) {
+        console.error('Failed to read image file:', err);
+      }
     }
   };
 
-  // Gallery images file handler
-  const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Gallery images file handler (converts to persistent Base64 Data URLs)
+  const handleGalleryFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const newUrls = Array.from(files).map((f) => URL.createObjectURL(f));
-      setGalleryImages((prev) => [...prev, ...newUrls]);
+      try {
+        const base64Urls = await Promise.all(
+          Array.from(files).map((f) => readFileAsDataUrl(f))
+        );
+        setGalleryImages((prev) => [...prev, ...base64Urls]);
+      } catch (err) {
+        console.error('Failed to read gallery files:', err);
+      }
     }
   };
 
@@ -128,6 +249,7 @@ export const AdminProductModal: React.FC<AdminProductModalProps> = ({
       id: product ? product.id : `prod_${Date.now()}`,
       name: name.trim(),
       category,
+      categoryId: categoryId || loadedCategories.find((c) => c.name === category)?.id,
       pricePaise: offerPricePaise, // active checkout price
       regularPricePaise,
       offerPricePaise,
@@ -204,15 +326,31 @@ export const AdminProductModal: React.FC<AdminProductModalProps> = ({
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value as Product['category'])}
+                onChange={(e) => {
+                  const selectedName = e.target.value;
+                  setCategory(selectedName);
+                  const matchingCat = loadedCategories.find((c) => c.name === selectedName);
+                  if (matchingCat) {
+                    setCategoryId(matchingCat.id);
+                  }
+                }}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#BAC095] text-xs sm:text-sm text-[#3D4127] focus:outline-none focus:ring-2 focus:ring-[#636B2F]/30 focus:border-[#636B2F] cursor-pointer"
               >
-                <option value="Snacks">Snacks</option>
-                <option value="Drinks">Drinks</option>
-                <option value="Chocolates">Chocolates</option>
-                <option value="Biscuits">Biscuits</option>
-                <option value="Combos">Combos</option>
-                <option value="Others">Others</option>
+                {loadedCategories && loadedCategories.length > 0 ? (
+                  loadedCategories.map((cat) => (
+                    <option key={cat.id || cat.name} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="Snacks">Snacks</option>
+                    <option value="Drinks">Drinks</option>
+                    <option value="Chocolates">Chocolates</option>
+                    <option value="Biscuits">Biscuits</option>
+                    <option value="Combos">Combos</option>
+                  </>
+                )}
               </select>
             </div>
           </div>
@@ -311,10 +449,18 @@ export const AdminProductModal: React.FC<AdminProductModalProps> = ({
             </label>
             <div className="flex items-center gap-4 p-3 rounded-2xl bg-[#F8F9F3] border border-[#E3E6D3]">
               <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-[#BAC095]/40 flex items-center justify-center shrink-0">
-                {image ? (
-                  <img src={image} alt="Preview" className="w-full h-full object-contain" />
+                {image && isValidPersistentImageUrl(image) && !imageHasError ? (
+                  <img
+                    src={image}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                    onError={() => setImageHasError(true)}
+                  />
                 ) : (
-                  <ImageIcon className="w-6 h-6 text-[#3D4127]/40" />
+                  <div className="flex flex-col items-center justify-center text-[#3D4127]/40">
+                    <ImageIcon className="w-6 h-6" />
+                    <span className="text-[9px] font-semibold mt-0.5">Photo</span>
+                  </div>
                 )}
               </div>
 
@@ -340,24 +486,36 @@ export const AdminProductModal: React.FC<AdminProductModalProps> = ({
               </div>
             </div>
 
-            {/* Presets */}
-            <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
-              {PRESET_SNACK_PHOTOS.map((preset) => (
-                <button
-                  key={preset.path}
-                  type="button"
-                  onClick={() => setImage(preset.path)}
-                  className={`px-2 py-1 rounded-lg border text-[10px] font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1 ${
-                    image === preset.path
-                      ? 'bg-[#636B2F] text-white border-[#636B2F]'
-                      : 'bg-white text-[#3D4127] border-[#BAC095]/60 hover:bg-[#F8F9F3]'
-                  }`}
-                >
-                  <img src={preset.path} alt={preset.label} className="w-3.5 h-3.5 object-cover rounded-xs" />
-                  <span>{preset.label}</span>
-                </button>
-              ))}
-            </div>
+            {/* Presets from Database Products */}
+            {dbPresetPhotos.length > 0 && (
+              <div className="mt-2 flex items-center gap-2 overflow-x-auto pb-1">
+                {dbPresetPhotos.map((preset) => (
+                  <button
+                    key={preset.path}
+                    type="button"
+                    onClick={() => {
+                      setImage(preset.path);
+                      setImageHasError(false);
+                    }}
+                    className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                      image === preset.path
+                        ? 'bg-[#636B2F] text-white border-[#636B2F] shadow-xs'
+                        : 'bg-white text-[#3D4127] border-[#BAC095]/60 hover:bg-[#F8F9F3]'
+                    }`}
+                  >
+                    <img
+                      src={preset.path}
+                      alt={preset.label}
+                      className="w-4 h-4 object-cover rounded-md"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                    <span>{preset.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Multiple Gallery Image Upload Area */}

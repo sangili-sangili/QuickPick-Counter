@@ -13,19 +13,48 @@ import {
   ExternalLink,
   Bell,
   User,
+  Users,
   LogOut,
   ChevronDown,
   Check,
   AlertTriangle,
   Info,
+  RefreshCw,
 } from 'lucide-react';
-import { Order, Product, ToastMessage, CategoryItem, AdminUser } from '../../types';
-import { AdminLocker, INITIAL_LOCKERS, INITIAL_ADMIN_ORDERS, INITIAL_CATEGORIES } from '../../data/mockAdminData';
-import { INITIAL_PRODUCTS } from '../../data/mockProducts';
+import { Order, Product, ToastMessage, CategoryItem, AdminUser, CustomerUser, AdminLocker } from '../../types';
+import {
+  getAdminProfileApi,
+  getAdminNotificationsApi,
+  markAllNotificationsReadApi,
+  getAdminCategoriesApi,
+  createAdminCategoryApi,
+  updateAdminCategoryApi,
+  deleteAdminCategoryApi,
+  getAdminProductsApi,
+  createAdminProductApi,
+  updateAdminProductApi,
+  updateAdminProductStockApi,
+  deleteAdminProductApi,
+  getAdminOrdersApi,
+  updateAdminOrderStatusApi,
+  simulateAdminOrderApi,
+  deleteAdminOrderApi,
+  getAdminLockersApi,
+  toggleUnlockLockerApi,
+  setLockerMaintenanceApi,
+  resetLockerApi,
+  emergencyUnlockAllApi,
+  getAdminCustomersApi,
+  createAdminCustomerApi,
+  updateAdminCustomerApi,
+  deleteAdminCustomerApi,
+  AdminNotification,
+} from '../../services/adminApi';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminCategories } from './AdminCategories';
 import { AdminProducts } from './AdminProducts';
 import { AdminOrders } from './AdminOrders';
+import { AdminCustomers } from './AdminCustomers';
 import { AdminLockers } from './AdminLockers';
 import { AdminSettings } from './AdminSettings';
 import { AdminOrderDetailModal } from './AdminOrderDetailModal';
@@ -33,20 +62,18 @@ import { AdminProductModal } from './AdminProductModal';
 import { AdminLogin } from './AdminLogin';
 import { ToastContainer } from '../common/Toast';
 
-export type AdminTab = 'dashboard' | 'categories' | 'products' | 'orders' | 'lockers' | 'settings';
+export type AdminTab = 'dashboard' | 'categories' | 'products' | 'orders' | 'customers' | 'lockers' | 'settings';
 
-const VALID_ADMIN_TABS: AdminTab[] = ['dashboard', 'categories', 'products', 'orders', 'lockers', 'settings'];
+const VALID_ADMIN_TABS: AdminTab[] = ['dashboard', 'categories', 'products', 'orders', 'customers', 'lockers', 'settings'];
 
 const getTabFromLocation = (pathname: string): AdminTab => {
   const parts = pathname.split('/').filter(Boolean);
-  // e.g. /admin/products -> parts is ['admin', 'products']
   if (parts.length >= 2 && parts[0] === 'admin') {
     const subRoute = parts[1].toLowerCase() as AdminTab;
     if (VALID_ADMIN_TABS.includes(subRoute)) {
       return subRoute;
     }
   }
-  // Check sessionStorage fallback if landed on /admin
   const savedTab = sessionStorage.getItem('quickpick_admin_active_tab') as AdminTab | null;
   if (savedTab && VALID_ADMIN_TABS.includes(savedTab)) {
     return savedTab;
@@ -75,15 +102,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const [adminUser, setAdminUser] = useState<AdminUser>({
     email: 'admin@quickpick.com',
-    name: 'Alex Johnson',
+    name: 'Administrator',
     role: 'Station Administrator',
     avatar: 'A',
   });
 
-  // Derive activeTab directly from current URL path, remembering on reload
+  // Active Tab state
   const [activeTab, setActiveTab] = useState<AdminTab>(() => getTabFromLocation(location.pathname));
 
-  // Keep activeTab in sync with browser location and normalize /admin -> /admin/${tab}
   useEffect(() => {
     const resolvedTab = getTabFromLocation(location.pathname);
     setActiveTab(resolvedTab);
@@ -102,42 +128,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // Notifications dropdown state
+  // Notifications state from live DB
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState([
-    {
-      id: 'notif_1',
-      title: 'Low Stock Alert',
-      message: 'Red Bull Can (250ml) inventory reached 3 units.',
-      time: '5m ago',
-      type: 'warning' as const,
-      read: false,
-    },
-    {
-      id: 'notif_2',
-      title: 'Payment Captured',
-      message: 'Order #ORD1234 completed payment of ₹110 via UPI.',
-      time: '12m ago',
-      type: 'success' as const,
-      read: false,
-    },
-    {
-      id: 'notif_3',
-      title: 'Locker Telemetry Check',
-      message: 'Solenoid diagnostics verified for 12 dispenser compartments.',
-      time: '45m ago',
-      type: 'info' as const,
-      read: false,
-    },
-  ]);
+  const [unreadNotifications, setUnreadNotifications] = useState<AdminNotification[]>([]);
 
   // Profile dropdown state
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
-  // Admin Data State
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ADMIN_ORDERS);
-  const [lockers, setLockers] = useState<AdminLocker[]>(INITIAL_LOCKERS);
-  const [categories, setCategories] = useState<CategoryItem[]>(INITIAL_CATEGORIES);
+  // Live Admin Data State (seeded from PostgreSQL via REST APIs)
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [lockers, setLockers] = useState<AdminLocker[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [customers, setCustomers] = useState<CustomerUser[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
 
   // Modals state
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
@@ -159,138 +162,233 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  // Synchronize all data from PostgreSQL
+  const refreshAdminData = async () => {
+    if (!sessionStorage.getItem('quickpick_admin_token')) return;
+    setIsLoadingData(true);
+    try {
+      const [profileRes, notifsRes, catsRes, prodsRes, ordsRes, locksRes, custsRes] =
+        await Promise.all([
+          getAdminProfileApi(),
+          getAdminNotificationsApi(),
+          getAdminCategoriesApi(),
+          getAdminProductsApi(),
+          getAdminOrdersApi(),
+          getAdminLockersApi(),
+          getAdminCustomersApi(),
+        ]);
+
+      if (profileRes) {
+        setAdminUser(profileRes);
+      }
+      if (notifsRes) {
+        setUnreadNotifications(notifsRes.notifications);
+      }
+      if (catsRes) {
+        setCategories(catsRes);
+      }
+      if (prodsRes && prodsRes.length > 0) {
+        onUpdateProducts(prodsRes);
+      }
+      if (ordsRes) {
+        setOrders(ordsRes);
+      }
+      if (locksRes) {
+        setLockers(locksRes);
+      }
+      if (custsRes) {
+        setCustomers(custsRes);
+      }
+    } catch (err) {
+      console.error('Failed to load admin telemetry:', err);
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Load data on initial mount or login
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshAdminData();
+    }
+  }, [isAuthenticated]);
+
   // Auth actions
-  const handleLoginSuccess = (user: AdminUser) => {
+  const handleLoginSuccess = async (user: AdminUser) => {
     setAdminUser(user);
     setIsAuthenticated(true);
     sessionStorage.setItem('quickpick_admin_auth', 'true');
-    addToast('success', `Welcome back, ${user.name}!`);
+    addToast('success', `Welcome back, ${user.name}! Connected to PostgreSQL.`);
+    await refreshAdminData();
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('quickpick_admin_auth');
+    sessionStorage.removeItem('quickpick_admin_token');
     setIsProfileDropdownOpen(false);
     addToast('info', 'Logged out of Admin Portal.');
   };
 
+  // Notification actions
+  const handleMarkAllNotificationsRead = async () => {
+    const ok = await markAllNotificationsReadApi();
+    if (ok) {
+      setUnreadNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      addToast('info', 'All notifications marked as read.');
+    }
+  };
+
   // Order actions
-  const handleUpdateOrderStatus = (orderId: string, status: Order['status']) => {
-    setOrders((prev) =>
-      prev.map((ord) => {
-        if (ord.id === orderId) {
-          return {
-            ...ord,
-            status,
-            timeline: [
-              ...(ord.timeline || []),
-              {
-                title: `Status changed to ${status.toUpperCase()} by Admin`,
-                time: new Date().toLocaleTimeString(),
-                completed: true,
-              },
-            ],
-          };
-        }
-        return ord;
-      })
-    );
-    addToast('success', `Order status updated to ${status.toUpperCase()}`);
+  const handleUpdateOrderStatus = async (orderId: string, status: Order['status']) => {
+    const ok = await updateAdminOrderStatusApi(orderId, status);
+    if (ok) {
+      const [updatedOrders, updatedLockers] = await Promise.all([
+        getAdminOrdersApi(),
+        getAdminLockersApi(),
+      ]);
+      setOrders(updatedOrders);
+      setLockers(updatedLockers);
+      addToast('success', `Order status updated to ${status.toUpperCase()} in DB.`);
+    } else {
+      addToast('error', 'Failed to update order status in backend.');
+    }
+  };
+
+  const handleSimulateNewOrder = async () => {
+    const created = await simulateAdminOrderApi();
+    if (created) {
+      const [updatedOrders, updatedLockers] = await Promise.all([
+        getAdminOrdersApi(),
+        getAdminLockersApi(),
+      ]);
+      setOrders(updatedOrders);
+      setLockers(updatedLockers);
+      addToast('success', `Simulated order #${created.orderNumber} placed in DB.`);
+    } else {
+      addToast('error', 'Failed to simulate order in backend.');
+    }
   };
 
   // Locker actions
-  const handleToggleUnlockLocker = (lockerId: string) => {
-    setLockers((prev) =>
-      prev.map((l) => {
-        if (l.id === lockerId) {
-          const nextState = l.doorState === 'locked' ? 'unlocked' : 'locked';
-          addToast('info', `${l.name} compartment solenoid ${nextState}`);
-          return { ...l, doorState: nextState };
-        }
-        return l;
-      })
-    );
+  const handleToggleUnlockLocker = async (lockerId: string) => {
+    const ok = await toggleUnlockLockerApi(lockerId);
+    if (ok) {
+      const updated = await getAdminLockersApi();
+      setLockers(updated);
+      const locker = updated.find((l) => l.id === lockerId);
+      addToast('info', `${locker?.name || 'Compartment'} door solenoid ${locker?.doorState || 'toggled'}.`);
+    } else {
+      addToast('error', 'Failed to toggle locker solenoid.');
+    }
   };
 
-  const handleResetLocker = (lockerId: string) => {
-    setLockers((prev) =>
-      prev.map((l) => {
-        if (l.id === lockerId) {
-          return {
-            ...l,
-            status: 'available',
-            orderId: undefined,
-            orderNumber: undefined,
-            assignedAt: undefined,
-            doorState: 'locked',
-          };
-        }
-        return l;
-      })
-    );
-    addToast('success', 'Compartment released & returned to available pool.');
+  const handleResetLocker = async (lockerId: string) => {
+    const ok = await resetLockerApi(lockerId);
+    if (ok) {
+      const updated = await getAdminLockersApi();
+      setLockers(updated);
+      addToast('success', 'Compartment released & returned to available pool.');
+    } else {
+      addToast('error', 'Failed to reset compartment.');
+    }
   };
 
-  const handleSetMaintenance = (lockerId: string) => {
-    setLockers((prev) =>
-      prev.map((l) => {
-        if (l.id === lockerId) {
-          const newStatus = l.status === 'out_of_service' ? 'available' : 'out_of_service';
-          return { ...l, status: newStatus };
-        }
-        return l;
-      })
-    );
-    addToast('info', 'Locker maintenance status updated.');
+  const handleSetMaintenance = async (lockerId: string) => {
+    const ok = await setLockerMaintenanceApi(lockerId);
+    if (ok) {
+      const updated = await getAdminLockersApi();
+      setLockers(updated);
+      addToast('info', 'Locker maintenance status updated in database.');
+    } else {
+      addToast('error', 'Failed to toggle maintenance mode.');
+    }
   };
 
-  const handleEmergencyUnlockAll = () => {
-    setLockers((prev) => prev.map((l) => ({ ...l, doorState: 'unlocked' })));
-    addToast('warning', 'EMERGENCY OVERRIDE: All 12 locker compartments unlocked.');
+  const handleEmergencyUnlockAll = async () => {
+    const ok = await emergencyUnlockAllApi();
+    if (ok) {
+      const updated = await getAdminLockersApi();
+      setLockers(updated);
+      addToast('warning', 'EMERGENCY OVERRIDE: All compartments unlocked in DB.');
+    } else {
+      addToast('error', 'Emergency unlock command failed.');
+    }
   };
 
   // Product management actions
-  const handleSaveProduct = (product: Product) => {
+  const handleSaveProduct = async (product: Product) => {
     const exists = products.some((p) => p.id === product.id);
-    let updated: Product[];
+    let res: Product | null;
     if (exists) {
-      updated = products.map((p) => (p.id === product.id ? product : p));
-      addToast('success', `${product.name} updated successfully.`);
+      res = await updateAdminProductApi(product.id, product);
+      if (res) addToast('success', `${product.name} updated in PostgreSQL.`);
     } else {
-      updated = [product, ...products];
-      addToast('success', `${product.name} added to catalog.`);
+      res = await createAdminProductApi(product);
+      if (res) addToast('success', `${product.name} added to PostgreSQL catalog.`);
     }
-    onUpdateProducts(updated);
+    if (res) {
+      const refreshed = await getAdminProductsApi();
+      onUpdateProducts(refreshed);
+    } else {
+      addToast('error', 'Failed to save product in database.');
+    }
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    const updated = products.filter((p) => p.id !== productId);
-    onUpdateProducts(updated);
+  const handleDeleteProduct = async (productId: string) => {
+    const res = await deleteAdminProductApi(productId);
+    if (res.success) {
+      const refreshed = await getAdminProductsApi();
+      onUpdateProducts(refreshed);
+      addToast('success', res.message);
+    } else {
+      addToast('error', res.message);
+    }
   };
 
-  const handleUpdateStock = (productId: string, newStock: number) => {
-    const updated = products.map((p) =>
-      p.id === productId ? { ...p, stock: newStock } : p
-    );
-    onUpdateProducts(updated);
+  const handleUpdateStock = async (productId: string, newStock: number) => {
+    const ok = await updateAdminProductStockApi(productId, newStock);
+    if (ok) {
+      const refreshed = await getAdminProductsApi();
+      onUpdateProducts(refreshed);
+      addToast('success', 'Physical stock count updated in PostgreSQL.');
+    } else {
+      addToast('error', 'Failed to update stock.');
+    }
   };
 
   // Category management actions
-  const handleSaveCategory = (cat: CategoryItem) => {
+  const handleSaveCategory = async (cat: CategoryItem) => {
     const exists = categories.some((c) => c.id === cat.id);
+    let res: CategoryItem | null;
     if (exists) {
-      setCategories((prev) => prev.map((c) => (c.id === cat.id ? cat : c)));
+      res = await updateAdminCategoryApi(cat.id, cat);
+      if (res) addToast('success', `Category "${cat.name}" updated.`);
     } else {
-      setCategories((prev) => [cat, ...prev]);
+      res = await createAdminCategoryApi(cat);
+      if (res) addToast('success', `Category "${cat.name}" created.`);
+    }
+    if (res) {
+      const refreshed = await getAdminCategoriesApi();
+      setCategories(refreshed);
+    } else {
+      addToast('error', 'Failed to save category in database.');
     }
   };
 
-  const handleDeleteCategory = (categoryId: string) => {
-    setCategories((prev) => prev.filter((c) => c.id !== categoryId));
+  const handleDeleteCategory = async (categoryId: string) => {
+    const res = await deleteAdminCategoryApi(categoryId);
+    if (res.success) {
+      const refreshed = await getAdminCategoriesApi();
+      setCategories(refreshed);
+      addToast('success', res.message);
+    } else {
+      addToast('error', res.message);
+    }
   };
 
   // Webhook test launcher
-  const handleTriggerWebhookTest = (orderNumber: string, outcome: 'captured' | 'failed') => {
+  const handleTriggerWebhookTest = async (orderNumber: string, outcome: 'captured' | 'failed') => {
     const foundOrder = orders.find((o) => o.orderNumber.toUpperCase() === orderNumber.toUpperCase());
     if (!foundOrder) {
       addToast('error', `Order ${orderNumber} not found.`);
@@ -298,66 +396,66 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     }
 
     if (outcome === 'captured') {
-      handleUpdateOrderStatus(foundOrder.id, 'paid');
-      if (!foundOrder.lockerNumber) {
-        const freeLocker = lockers.find((l) => l.status === 'available');
-        if (freeLocker) {
-          setLockers((prev) =>
-            prev.map((l) =>
-              l.id === freeLocker.id
-                ? {
-                    ...l,
-                    status: 'occupied',
-                    orderId: foundOrder.id,
-                    orderNumber: foundOrder.orderNumber,
-                    assignedAt: 'Just Now',
-                  }
-                : l
-            )
-          );
-          setOrders((prev) =>
-            prev.map((o) =>
-              o.id === foundOrder.id ? { ...o, lockerNumber: freeLocker.name || freeLocker.number } : o
-            )
-          );
-        }
-      }
+      await handleUpdateOrderStatus(foundOrder.id, 'paid');
       addToast('success', `Simulated Webhook Captured: ${foundOrder.orderNumber} marked PAID!`);
     } else {
-      handleUpdateOrderStatus(foundOrder.id, 'needs_review');
+      await handleUpdateOrderStatus(foundOrder.id, 'needs_review');
       addToast('warning', `Simulated Webhook Discrepancy: ${foundOrder.orderNumber} flagged!`);
     }
   };
 
-  const handleSimulateNewOrder = () => {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const newOrder: Order = {
-      id: `ord_${Date.now()}`,
-      orderNumber: `ORD${randomNum}`,
-      items: [
-        { product: products[0] || INITIAL_PRODUCTS[0], quantity: 1 },
-        { product: products[1] || INITIAL_PRODUCTS[1], quantity: 1 },
-      ],
-      totalPaise: 7000,
-      status: 'unpaid',
-      createdAt: 'Just now',
-      expiresInSeconds: 120,
-      expiresAt: Date.now() + 120000,
-      timeline: [
-        { title: 'Order Generated', time: 'Just now', completed: true },
-        { title: 'Awaiting Webhook Payment', time: 'Just now', completed: false },
-      ],
-    };
-    setOrders((prev) => [newOrder, ...prev]);
-    addToast('success', `Simulated new incoming customer order #${newOrder.orderNumber}`);
+  const handleResetSeedData = async () => {
+    await refreshAdminData();
+    addToast('info', 'Synchronized live inventory, categories and lockers from PostgreSQL.');
   };
 
-  const handleResetSeedData = () => {
-    setOrders(INITIAL_ADMIN_ORDERS);
-    setLockers(INITIAL_LOCKERS);
-    setCategories(INITIAL_CATEGORIES);
-    onUpdateProducts(INITIAL_PRODUCTS);
-    addToast('info', 'Demo inventory, categories and lockers restored to default seed.');
+  // Customer management actions
+  const handleAddCustomer = async (newCust: CustomerUser) => {
+    const res = await createAdminCustomerApi(newCust);
+    if (res) {
+      const refreshed = await getAdminCustomersApi();
+      setCustomers(refreshed);
+      addToast('success', `Customer ${newCust.name} created in PostgreSQL.`);
+    } else {
+      addToast('error', 'Failed to register customer in database.');
+    }
+  };
+
+  const handleUpdateCustomer = async (updatedCust: CustomerUser) => {
+    const ok = await updateAdminCustomerApi(updatedCust.id, updatedCust);
+    if (ok) {
+      const refreshed = await getAdminCustomersApi();
+      setCustomers(refreshed);
+      addToast('info', `Customer ${updatedCust.name} profile updated in DB.`);
+    } else {
+      addToast('error', 'Failed to update customer in database.');
+    }
+  };
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    const res = await deleteAdminCustomerApi(customerId);
+    if (res.success) {
+      const refreshed = await getAdminCustomersApi();
+      setCustomers(refreshed);
+      addToast('success', res.message);
+    } else {
+      addToast('error', res.message);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    const res = await deleteAdminOrderApi(orderId);
+    if (res.success) {
+      const [refreshedOrders, refreshedLockers] = await Promise.all([
+        getAdminOrdersApi(),
+        getAdminLockersApi(),
+      ]);
+      setOrders(refreshedOrders);
+      setLockers(refreshedLockers);
+      addToast('success', res.message);
+    } else {
+      addToast('error', res.message);
+    }
   };
 
   // Navigation Items
@@ -366,16 +464,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { key: 'categories', label: 'Category Master', icon: Layers },
     { key: 'products', label: 'Products', icon: Package },
     { key: 'orders', label: 'Orders', icon: Receipt },
+    { key: 'customers', label: 'Customers', icon: Users },
     { key: 'lockers', label: 'Locker Status', icon: Box },
     { key: 'settings', label: 'Settings', icon: Settings },
   ] as const;
 
   // Unread notification count
   const unreadCount = unreadNotifications.filter((n) => !n.read).length;
-
-  const handleMarkAllNotificationsRead = () => {
-    setUnreadNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
 
   // If unauthenticated, show professional Admin Login screen
   if (!isAuthenticated) {
@@ -491,6 +586,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             >
               <ExternalLink className="w-3.5 h-3.5 text-[#636B2F]" />
               <span>Customer Screen</span>
+            </button>
+
+            {/* Sync DB Button */}
+            <button
+              type="button"
+              onClick={refreshAdminData}
+              disabled={isLoadingData}
+              className="hidden sm:flex px-3 py-1.5 rounded-xl bg-white hover:bg-[#F8F9F3] text-[#3D4127] border border-[#BAC095]/60 font-bold text-xs shadow-xs transition-all items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+              title="Synchronize live PostgreSQL database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 text-[#636B2F] ${isLoadingData ? 'animate-spin' : ''}`} />
+              <span>{isLoadingData ? 'Syncing...' : 'Sync DB'}</span>
             </button>
 
             {/* Notification Bell with Dropdown */}
@@ -702,6 +809,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             {activeTab === 'products' && (
               <AdminProducts
                 products={products}
+                categories={categories}
                 onOpenAddModal={() => {
                   setSelectedProductForModal(null);
                   setIsProductModalOpen(true);
@@ -721,6 +829,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 orders={orders}
                 onViewOrder={(order) => setSelectedOrderForModal(order)}
                 onUpdateOrderStatus={handleUpdateOrderStatus}
+                onDeleteOrder={handleDeleteOrder}
+                onToast={addToast}
+              />
+            )}
+
+            {activeTab === 'customers' && (
+              <AdminCustomers
+                customers={customers}
+                orders={orders}
+                onAddCustomer={handleAddCustomer}
+                onUpdateCustomer={handleUpdateCustomer}
+                onDeleteCustomer={handleDeleteCustomer}
+                onViewOrder={(order) => setSelectedOrderForModal(order)}
                 onToast={addToast}
               />
             )}
@@ -841,6 +962,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         isOpen={isProductModalOpen}
         onClose={() => setIsProductModalOpen(false)}
         onSaveProduct={handleSaveProduct}
+        categories={categories}
+        products={products}
       />
 
       {/* Toast Notifications */}

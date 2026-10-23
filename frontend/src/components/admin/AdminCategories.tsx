@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Layers } from 'lucide-react';
+import { Plus, Edit2, Trash2, Layers, AlertTriangle } from 'lucide-react';
 import { CategoryItem } from '../../types';
 import { AdminTable, TableColumn } from './AdminTable';
 import { AdminCategoryModal } from './AdminCategoryModal';
@@ -47,7 +47,14 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
       render: (cat) => (
         <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#F0F2E5] border border-[#BAC095]/40 flex items-center justify-center">
           {cat.image ? (
-            <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+            <img
+              src={cat.image}
+              alt={cat.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/images/lays.jpg';
+              }}
+            />
           ) : (
             <Layers className="w-5 h-5 text-[#636B2F]" />
           )}
@@ -192,6 +199,7 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
           onSaveCategory(cat);
           onToast('success', `Category "${cat.name}" saved successfully.`);
         }}
+        existingCategories={categories}
       />
 
       {/* Delete Confirmation Modal */}
@@ -201,19 +209,63 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
             <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
+
             <div>
               <h3 className="text-base font-black text-[#3D4127]">Delete Category?</h3>
               <p className="text-xs text-[#3D4127]/70 mt-1">
                 Are you sure you want to delete{' '}
-                <strong className="text-[#3D4127]">"{categoryToDelete.name}"</strong>? This will
-                unassign it from {categoryToDelete.productCount ?? 0} products.
+                <strong className="text-[#3D4127]">"{categoryToDelete.name}"</strong>?
               </p>
             </div>
+
+            {/* Entity Details Card */}
+            <div className="p-3 rounded-2xl bg-[#F8F9F3] border border-[#BAC095]/40 flex items-center gap-3 text-left">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-[#BAC095]/40 shrink-0 flex items-center justify-center">
+                {categoryToDelete.image ? (
+                  <img
+                    src={categoryToDelete.image}
+                    alt={categoryToDelete.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/lays.jpg';
+                    }}
+                  />
+                ) : (
+                  <Layers className="w-5 h-5 text-[#636B2F]" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-black text-[#3D4127] truncate">
+                  {categoryToDelete.name}
+                </div>
+                <div className="text-[10px] text-[#3D4127]/60">
+                  {categoryToDelete.productCount ?? 0} assigned products
+                </div>
+              </div>
+            </div>
+
+            {/* Foreign Key Warning Banner */}
+            {(categoryToDelete.productCount ?? 0) > 0 ? (
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-xs text-amber-900">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>Foreign Key Constraint</span>
+                </div>
+                <p className="text-[11px] text-amber-800/80 leading-relaxed">
+                  This category has <strong>{categoryToDelete.productCount}</strong> linked product(s). Relational protection will block deletion until these products are reassigned or removed.
+                </p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-stone-500">
+                This category has 0 assigned products and can be safely deleted.
+              </p>
+            )}
+
             <div className="flex items-center justify-center gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setCategoryToDelete(null)}
-                className="px-4 py-2 rounded-xl border border-[#BAC095]/60 text-xs font-bold text-[#3D4127] hover:bg-stone-50 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-[#BAC095]/60 text-xs font-bold text-[#3D4127] hover:bg-stone-50 cursor-pointer flex-1"
               >
                 Cancel
               </button>
@@ -221,10 +273,9 @@ export const AdminCategories: React.FC<AdminCategoriesProps> = ({
                 type="button"
                 onClick={() => {
                   onDeleteCategory(categoryToDelete.id);
-                  onToast('info', `Category "${categoryToDelete.name}" removed.`);
                   setCategoryToDelete(null);
                 }}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer active:scale-95 shadow-xs"
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer active:scale-95 shadow-xs flex-1 transition-all"
               >
                 Yes, Delete
               </button>

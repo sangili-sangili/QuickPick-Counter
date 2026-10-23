@@ -75,6 +75,9 @@ export const AdminProductDetailModal: React.FC<AdminProductDetailModalProps> = (
                 src={allImages[activeIndex] || product.image}
                 alt={product.name}
                 className="max-h-full max-w-full object-contain drop-shadow-md transition-all duration-300"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/lays.jpg';
+                }}
               />
 
               {/* Slider Arrows */}
@@ -136,7 +139,14 @@ export const AdminProductDetailModal: React.FC<AdminProductDetailModalProps> = (
                         : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt={`Thumb ${idx}`} className="w-full h-full object-contain" />
+                    <img
+                      src={img}
+                      alt={`Thumb ${idx}`}
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/lays.jpg';
+                      }}
+                    />
                   </button>
                 ))}
               </div>

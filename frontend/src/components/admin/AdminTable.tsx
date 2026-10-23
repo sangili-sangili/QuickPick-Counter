@@ -177,52 +177,80 @@ export function AdminTable<T>({
   const startIndex = (safeCurrentPage - 1) * pageSize;
   const paginatedData = processedData.slice(startIndex, startIndex + pageSize);
 
-  // Excel Export Handler (Visual UI export simulation with clean CSV download for local experience)
+  // Excel / CSV Export Handler (Standard Blob API with UTF-8 BOM for Microsoft Excel & Google Sheets)
   const handleExportExcel = () => {
     setIsExporting(true);
     setTimeout(() => {
       try {
-        // Build simple CSV representation
-        const headers = [
-          showSerial ? '#' : null,
-          ...columns.map((c) => `"${c.header.replace(/"/g, '""')}"`),
+        // Filter out non-exportable action columns
+        const exportableColumns = columns.filter((c) => {
+          const k = c.key.toLowerCase();
+          const h = c.header.toLowerCase();
+          return k !== 'actions' && h !== 'actions';
+        });
+
+        // Build clean headers
+        const headerRow = [
+          showSerial ? 'S.No.' : null,
+          ...exportableColumns.map((c) => c.header),
         ]
           .filter(Boolean)
+          .map((h) => `"${String(h).replace(/"/g, '""')}"`)
           .join(',');
 
-        const rows = processedData.map((item, idx) => {
+        // Choose records: active filtered/sorted rows or full dataset if filter is empty
+        const recordsToExport = processedData.length > 0 ? processedData : data;
+
+        const dataRows = recordsToExport.map((item, idx) => {
           const rowVals: string[] = [];
           if (showSerial) rowVals.push(String(idx + 1));
-          columns.forEach((col) => {
+
+          exportableColumns.forEach((col) => {
             let val = '';
             if (col.accessor) {
               const raw = col.accessor(item);
               val = raw !== null && raw !== undefined ? String(raw) : '';
+            } else if ((item as any)[col.key] !== undefined) {
+              const raw = (item as any)[col.key];
+              val = raw !== null && raw !== undefined ? String(raw) : '';
             }
+            // Sanitize carriage returns or newlines inside CSV cell
+            val = val.replace(/\r?\n/g, ' ');
             rowVals.push(`"${val.replace(/"/g, '""')}"`);
           });
+
           return rowVals.join(',');
         });
 
-        const csvContent = 'data:text/csv;charset=utf-8,' + [headers, ...rows].join('\n');
-        const encodedUri = encodeURI(csvContent);
+        // Prepend UTF-8 BOM (\uFEFF) so Excel/Sheets correctly open UTF-8 characters without garbling
+        const csvString = '\uFEFF' + [headerRow, ...dataRows].join('\r\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const downloadUrl = URL.createObjectURL(blob);
+
         const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `${exportFileName}_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.href = downloadUrl;
+        const cleanFileName = exportFileName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const dateStamp = new Date().toISOString().slice(0, 10);
+        link.setAttribute('download', `${cleanFileName}_${dateStamp}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
+        setTimeout(() => {
+          URL.revokeObjectURL(downloadUrl);
+        }, 1500);
+
         setIsExporting(false);
         setExportComplete(true);
         if (onExportSuccess) {
-          onExportSuccess(`${exportFileName}.csv`);
+          onExportSuccess(`${cleanFileName}_${dateStamp}.csv`);
         }
         setTimeout(() => setExportComplete(false), 3000);
-      } catch {
+      } catch (err) {
+        console.error('Failed to export CSV:', err);
         setIsExporting(false);
       }
-    }, 400);
+    }, 250);
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, Phone, User, Eye, EyeOff, Sparkles, CheckCircle2 } from 'lucide-react';
 import { CustomerUser } from '../../types';
+import { customerLoginAPI, customerRegisterAPI } from '../../services/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -34,23 +35,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleQuickDemoLogin = () => {
+  const handleQuickDemoLogin = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      const demoUser: CustomerUser = {
-        id: 'usr_demo_882',
-        name: 'Alex Johnson',
-        email: 'alex.j@snackhub.in',
-        phone: '+91 98765 43210',
-        membershipTier: 'Gold Member',
-      };
-      setIsLoading(false);
-      onLoginSuccess(demoUser);
+    setErrorMessage('');
+    const result = await customerLoginAPI('alex.j@snackhub.in', 'password123');
+    setIsLoading(false);
+
+    if (result.success && result.user) {
+      onLoginSuccess(result.user);
       onClose();
-    }, 350);
+    } else {
+      setErrorMessage(result.error || 'Demo login failed');
+    }
   };
 
-  const handleSignInSubmit = (e: React.FormEvent) => {
+  const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -64,22 +63,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      const isEmail = signInIdentifier.includes('@');
-      const user: CustomerUser = {
-        id: `usr_${Date.now().toString(36)}`,
-        name: isEmail ? signInIdentifier.split('@')[0] : 'Customer',
-        email: isEmail ? signInIdentifier : `${signInIdentifier}@kiosk.snackhub.in`,
-        phone: !isEmail ? signInIdentifier : '+91 98765 00000',
-        membershipTier: 'Gold Member',
-      };
-      onLoginSuccess(user);
+    const result = await customerLoginAPI(signInIdentifier.trim(), signInPassword);
+    setIsLoading(false);
+
+    if (result.success && result.user) {
+      onLoginSuccess(result.user);
       onClose();
-    }, 400);
+    } else {
+      setErrorMessage(result.error || 'Invalid email or password');
+    }
   };
 
-  const handleSignUpSubmit = (e: React.FormEvent) => {
+  const handleSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -105,18 +100,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      const newUser: CustomerUser = {
-        id: `usr_${Date.now().toString(36)}`,
-        name: signUpName.trim(),
-        email: signUpEmail.trim(),
-        phone: signUpPhone.trim(),
-        membershipTier: 'Member',
-      };
-      onLoginSuccess(newUser);
+    const result = await customerRegisterAPI(
+      signUpName.trim(),
+      signUpEmail.trim(),
+      signUpPassword,
+      signUpPhone.trim()
+    );
+    setIsLoading(false);
+
+    if (result.success && result.user) {
+      onLoginSuccess(result.user);
       onClose();
-    }, 450);
+    } else {
+      setErrorMessage(result.error || 'Registration failed');
+    }
   };
 
   return (

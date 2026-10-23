@@ -1,4 +1,4 @@
-import { Order, CategoryItem, SmartLocker } from '../types';
+import { Order, CategoryItem, SmartLocker, CustomerUser } from '../types';
 import { INITIAL_PRODUCTS } from './mockProducts';
 
 export const INITIAL_CATEGORIES: CategoryItem[] = [
@@ -261,3 +261,85 @@ export const INITIAL_ADMIN_ORDERS: Order[] = [
     ],
   },
 ];
+
+export const INITIAL_CUSTOMERS: CustomerUser[] = [
+  {
+    id: 'usr_demo_882',
+    name: 'Alex Johnson',
+    email: 'alex.j@snackhub.in',
+    phone: '+91 98765 43210',
+    avatar: 'A',
+    membershipTier: 'Gold Member',
+    ordersCount: 8,
+    totalSpentPaise: 84000, // ₹840.00
+    lastOrderDate: 'Today, 11:32 AM',
+    createdAt: '2026-08-15',
+    status: 'active',
+  },
+  {
+    id: 'usr_demo_883',
+    name: 'Priya Sharma',
+    email: 'priya.s@quickpick.in',
+    phone: '+91 91234 56789',
+    avatar: 'P',
+    membershipTier: 'Silver Member',
+    ordersCount: 4,
+    totalSpentPaise: 38000, // ₹380.00
+    lastOrderDate: 'Today, 11:30 AM',
+    createdAt: '2026-09-02',
+    status: 'active',
+  },
+  {
+    id: 'usr_demo_884',
+    name: 'Rahul Verma',
+    email: 'rahul.v@quickpick.in',
+    phone: '+91 97890 12345',
+    avatar: 'R',
+    membershipTier: 'Gold Member',
+    ordersCount: 12,
+    totalSpentPaise: 145000, // ₹1,450.00
+    lastOrderDate: 'Today, 10:45 AM',
+    createdAt: '2026-07-20',
+    status: 'active',
+  },
+  {
+    id: 'usr_demo_885',
+    name: 'Ananya Patel',
+    email: 'ananya.p@quickpick.in',
+    phone: '+91 99887 76655',
+    avatar: 'A',
+    membershipTier: 'Bronze Member',
+    ordersCount: 2,
+    totalSpentPaise: 16000, // ₹160.00
+    lastOrderDate: 'Yesterday, 04:15 PM',
+    createdAt: '2026-10-10',
+    status: 'active',
+  },
+  {
+    id: 'usr_demo_886',
+    name: 'Vikram Singhania',
+    email: 'vikram.s@quickpick.in',
+    phone: '+91 98220 33445',
+    avatar: 'V',
+    membershipTier: 'Gold Member',
+    ordersCount: 15,
+    totalSpentPaise: 210000, // ₹2,100.00
+    lastOrderDate: 'Oct 21, 02:10 PM',
+    createdAt: '2026-06-12',
+    status: 'active',
+  },
+  {
+    id: 'usr_demo_887',
+    name: 'Neha Kapoor',
+    email: 'neha.k@quickpick.in',
+    phone: '+91 98450 67890',
+    avatar: 'N',
+    membershipTier: 'Silver Member',
+    ordersCount: 5,
+    totalSpentPaise: 52000, // ₹520.00
+    lastOrderDate: 'Oct 20, 06:40 PM',
+    createdAt: '2026-09-18',
+    status: 'active',
+  },
+];
+
