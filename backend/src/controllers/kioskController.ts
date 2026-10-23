@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
+import { createAdminNotification } from '../services/notificationService.js';
 
 /**
  * GET /api/products
@@ -192,6 +193,22 @@ export const getProductById = async (req: Request, res: Response) => {
 export const createKioskOrder = async (req: Request, res: Response) => {
   try {
     const { items, customerId, paymentMethod } = req.body;
+    if (!customerId) {
+      return res.status(401).json({ error: 'Customer login is required to place an order.' });
+    }
+
+    let resolvedCustomerId: string = customerId;
+    const existingCust = await prisma.customer.findFirst({
+      where: {
+        OR: [{ id: String(customerId) }, { userId: String(customerId) }],
+      },
+    });
+    if (existingCust) {
+      resolvedCustomerId = existingCust.id;
+    } else {
+      return res.status(401).json({ error: 'Valid customer profile required to place order.' });
+    }
+
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order items are required.' });
     }
@@ -278,7 +295,7 @@ export const createKioskOrder = async (req: Request, res: Response) => {
           status: paymentMethod === 'wallet' ? 'PAID' : 'UNPAID',
           expiresAt,
           lockerNumber: freeLocker?.number || 'L-01',
-          customerId: customerId || null,
+          customerId: resolvedCustomerId,
           items: {
             create: orderItemsData,
           },
@@ -301,6 +318,18 @@ export const createKioskOrder = async (req: Request, res: Response) => {
 
       return newOrder;
     });
+
+    // Trigger Low Stock Alerts if any item inventory reached <= 3 units
+    for (const item of items) {
+      const dbProd = productMap.get(item.productId);
+      if (dbProd && (dbProd.physicalStock - item.quantity) <= 3) {
+        createAdminNotification({
+          title: 'Low Stock Alert',
+          message: `${dbProd.name} inventory reached ${Math.max(0, dbProd.physicalStock - item.quantity)} units.`,
+          type: 'warning',
+        });
+      }
+    }
 
     return res.status(201).json({
       success: true,
@@ -352,6 +381,12 @@ export const claimKioskPickup = async (req: Request, res: Response) => {
       });
     }
 
+    createAdminNotification({
+      title: `Pickup Claimed: #${order.orderNumber}`,
+      message: `Customer retrieved snacks from Locker ${order.lockerNumber || 'N/A'}. Compartment is ready for next order.`,
+      type: 'info',
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Dispenser compartment unlocked. Items collected successfully.',
@@ -393,6 +428,12 @@ export const confirmOrderPayment = async (req: Request, res: Response) => {
         data: { status: 'OCCUPIED' },
       });
     }
+
+    createAdminNotification({
+      title: `Order #${order.orderNumber} Paid`,
+      message: `Payment of ₹${order.totalPaise / 100} received. Locker ${order.lockerNumber || 'N/A'} unlocked for customer.`,
+      type: 'success',
+    });
 
     return res.status(200).json({
       success: true,

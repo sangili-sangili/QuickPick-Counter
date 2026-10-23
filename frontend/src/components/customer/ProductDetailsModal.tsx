@@ -152,12 +152,21 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
             <div className="flex items-center gap-3 pt-0.5 text-xs">
               <div className="flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200/60">
                 <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
-                <span className="font-bold text-stone-800">
-                  {product.rating || 4.8}
-                </span>
-                <span className="text-stone-400">
-                  ({product.ratingCount || 120} reviews)
-                </span>
+                {product.ratingCount && product.ratingCount > 0 ? (
+                  <>
+                    <span className="font-bold text-stone-800">
+                      {Number(product.rating || 5).toFixed(1)}
+                    </span>
+                    <span className="text-stone-400">
+                      ({product.ratingCount} {product.ratingCount === 1 ? 'review' : 'reviews'})
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-bold text-stone-800">5.0</span>
+                    <span className="text-stone-400">(0 reviews)</span>
+                  </>
+                )}
               </div>
 
               <span className="text-stone-500 font-semibold">

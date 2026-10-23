@@ -57,6 +57,7 @@ export default function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<Order[]>([]);
 
   // Customer Auth state (persisted across sessions)
   const [currentUser, setCurrentUser] = useState<CustomerUser | null>(() => {
@@ -116,6 +117,9 @@ export default function App() {
     fetchCustomerProfileAPI().then((prof) => {
       if (prof) {
         setCurrentUser(prof);
+        if (Array.isArray((prof as any).orders)) {
+          setCustomerOrders((prof as any).orders);
+        }
         try {
           localStorage.setItem('snackhub_customer', JSON.stringify(prof));
         } catch {}
@@ -193,6 +197,9 @@ export default function App() {
 
     if (freshProfile) {
       setCurrentUser(freshProfile);
+      if (Array.isArray((freshProfile as any).orders)) {
+        setCustomerOrders((freshProfile as any).orders);
+      }
     }
     if (serverWishlist && serverWishlist.length > 0) {
       setWishlistIds(serverWishlist.map((p) => p.id));
@@ -212,11 +219,18 @@ export default function App() {
     setCurrentUser(null);
     setCart([]);
     setWishlistIds([]);
+    setCustomerOrders([]);
     addToast('info', 'Signed out successfully.');
   };
 
   // Wishlist API Toggle
   const handleToggleWishlist = async (productId: string) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      addToast('info', 'Please sign in or register to save items to your wishlist.');
+      return;
+    }
+
     const isSaved = wishlistIds.includes(productId);
     if (isSaved) {
       setWishlistIds((prev) => prev.filter((id) => id !== productId));
@@ -231,6 +245,12 @@ export default function App() {
 
   // Cart API Operations
   const handleAddToCart = async (product: Product) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      addToast('info', 'Please sign in or register to add items to your cart.');
+      return;
+    }
+
     const existing = cart.find((item) => item.product.id === product.id);
     const currentQty = existing ? existing.quantity : 0;
 
@@ -261,6 +281,12 @@ export default function App() {
   };
 
   const handleUpdateQuantityFromModal = (product: Product, quantity: number) => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      addToast('info', 'Please sign in or register to add items to your cart.');
+      return;
+    }
+
     if (quantity <= 0) {
       handleRemoveItem(product.id);
       return;
@@ -329,6 +355,12 @@ export default function App() {
 
   // Order submission & stock hold in Database
   const handlePlaceOrder = async () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      addToast('info', 'Please sign in or register to place your order.');
+      return;
+    }
+
     if (cart.length === 0) return;
 
     setIsPlacingOrder(true);
@@ -397,7 +429,12 @@ export default function App() {
 
     // Refresh user profile if balance or order count changed
     fetchCustomerProfileAPI().then((prof) => {
-      if (prof) setCurrentUser(prof);
+      if (prof) {
+        setCurrentUser(prof);
+        if (Array.isArray((prof as any).orders)) {
+          setCustomerOrders((prof as any).orders);
+        }
+      }
     });
 
     navigate('/success');
@@ -703,7 +740,7 @@ export default function App() {
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
           currentUser={currentUser}
-          orders={currentOrder ? [currentOrder] : []}
+          orders={customerOrders.length > 0 ? customerOrders : (currentOrder ? [currentOrder] : [])}
           onLogout={handleLogout}
         />
       )}

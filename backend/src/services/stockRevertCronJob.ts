@@ -1,4 +1,5 @@
 import { prisma } from '../config/prisma.js';
+import { createAdminNotification } from './notificationService.js';
 
 let cronInterval: NodeJS.Timeout | null = null;
 
@@ -65,6 +66,27 @@ export async function revertExpiredOrdersAndStock(): Promise<{
       console.log(
         `🔄 [STOCK REVERT CRON] Order #${order.orderNumber} expired. Reverted ${order.items.length} product(s) back to physical stock and freed Locker ${order.lockerNumber || 'N/A'}.`
       );
+
+      createAdminNotification({
+        title: `Order #${order.orderNumber} Expired`,
+        message: `Order unpaid after 120s. Returned ${order.items.length} item(s) to stock and freed Locker ${order.lockerNumber || 'N/A'}.`,
+        type: 'warning',
+      });
+    }
+
+    // Clean up abandoned cart items older than 2 hours
+    try {
+      const cartExpiry = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      const removedCart = await prisma.addToCart.deleteMany({
+        where: {
+          updatedAt: { lt: cartExpiry },
+        },
+      });
+      if (removedCart.count > 0) {
+        console.log(`🛒 [CART CLEANUP CRON] Removed ${removedCart.count} abandoned cart item(s).`);
+      }
+    } catch (cartErr: any) {
+      console.warn('⚠️ [CART CLEANUP CRON WARNING]:', cartErr.message);
     }
 
     return {

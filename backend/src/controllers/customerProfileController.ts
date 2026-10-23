@@ -21,7 +21,7 @@ export const getCustomerProfile = async (req: AuthenticatedRequest, res: Respons
             orders: {
               include: {
                 items: {
-                  include: { product: true },
+                  include: { product: { include: { category: true } } },
                 },
               },
               orderBy: { createdAt: 'desc' },
@@ -43,18 +43,32 @@ export const getCustomerProfile = async (req: AuthenticatedRequest, res: Respons
     const orders = (customer?.orders || []).map((o) => ({
       id: o.id,
       orderNumber: o.orderNumber,
+      customerId: customer?.id,
       totalPaise: o.totalPaise,
       totalRupees: o.totalPaise / 100,
-      status: o.status,
+      status: o.status.toLowerCase(),
       lockerNumber: o.lockerNumber,
       pickupClaimedAt: o.pickupClaimedAt,
-      createdAt: o.createdAt,
+      createdAt: o.createdAt.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       items: o.items.map((i) => ({
         id: i.id,
         productId: i.productId,
-        productName: i.product?.name || 'Item',
+        productName: i.product?.name || 'Snack Item',
         quantity: i.quantity,
         unitPricePaise: i.unitPricePaise,
+        product: {
+          id: i.productId,
+          name: i.product?.name || 'Snack Item',
+          pricePaise: i.unitPricePaise,
+          image: i.product?.image || '/images/lays.jpg',
+          category: i.product?.category?.name || 'Snacks',
+        },
       })),
     }));
 

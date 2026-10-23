@@ -30,6 +30,7 @@ export const AdminProductModal: React.FC<AdminProductModalProps> = ({
   const [stock, setStock] = useState('10');
   const [subtitle, setSubtitle] = useState('');
   const [badge, setBadge] = useState('');
+  const [badgeType, setBadgeType] = useState<'red' | 'amber' | 'green'>('red');
   const [image, setImage] = useState('');
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [description, setDescription] = useState('');
@@ -153,6 +154,7 @@ const STANDARD_LIBRARY_PRESETS = [
       setStock(product.stock.toString());
       setSubtitle(product.subtitle || '');
       setBadge(product.badge || '');
+      setBadgeType(product.badgeType || 'red');
       const initialImg = isValidPersistentImageUrl(product.image)
         ? product.image
         : (dbPresetPhotos[0]?.path || '/images/lays.jpg');
@@ -173,6 +175,7 @@ const STANDARD_LIBRARY_PRESETS = [
       setStock('12');
       setSubtitle('');
       setBadge('');
+      setBadgeType('red');
       setImage(dbPresetPhotos[0]?.path || '/images/lays.jpg');
       setGalleryImages([]);
       setDescription('');
@@ -256,13 +259,13 @@ const STANDARD_LIBRARY_PRESETS = [
       stock: stockNum,
       subtitle: subtitle.trim() || undefined,
       badge: badge.trim() || undefined,
-      badgeType: product?.badgeType || 'green',
+      badgeType: badge.trim() ? badgeType : undefined,
       image,
       galleryImages,
       description: description.trim() || undefined,
       isActive,
-      rating: product?.rating ?? 4.8,
-      ratingCount: product?.ratingCount ?? 45,
+      rating: product?.rating ?? 5.0,
+      ratingCount: product?.ratingCount ?? 0,
     };
 
     onSaveProduct(updatedProduct);
@@ -417,6 +420,38 @@ const STANDARD_LIBRARY_PRESETS = [
               placeholder="Fresh and crispy snack description..."
               className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#BAC095] text-xs sm:text-sm text-[#3D4127] focus:outline-none focus:ring-2 focus:ring-[#636B2F]/30 focus:border-[#636B2F] resize-none"
             />
+          </div>
+
+          {/* Optional Card Top Badge */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-[#3D4127]/80 mb-1.5">
+                Top Card Badge (Optional)
+              </label>
+              <input
+                type="text"
+                value={badge}
+                onChange={(e) => setBadge(e.target.value)}
+                placeholder="e.g. Bestseller, New (or leave blank for none)"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#BAC095] text-xs sm:text-sm text-[#3D4127] focus:outline-none focus:ring-2 focus:ring-[#636B2F]/30 focus:border-[#636B2F]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-[#3D4127]/80 mb-1.5">
+                Badge Color
+              </label>
+              <select
+                value={badgeType}
+                onChange={(e) => setBadgeType(e.target.value as 'red' | 'amber' | 'green')}
+                disabled={!badge.trim()}
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-[#BAC095] text-xs sm:text-sm text-[#3D4127] focus:outline-none focus:ring-2 focus:ring-[#636B2F]/30 focus:border-[#636B2F] disabled:opacity-50"
+              >
+                <option value="red">Red (Hot / Bestseller)</option>
+                <option value="amber">Amber (Special / Top Pick)</option>
+                <option value="green">Green (Sweet / Fresh)</option>
+              </select>
+            </div>
           </div>
 
           {/* Active Status Toggle */}

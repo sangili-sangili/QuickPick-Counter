@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
   Crown,
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { CustomerUser, Order } from '../../types';
 import { formatRupees } from '../../utils/format';
+import { fetchCustomerProfileAPI } from '../../services/api';
 
 interface CustomerProfileModalProps {
   isOpen: boolean;
@@ -27,14 +28,30 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
   orders,
   onLogout,
 }) => {
+  const [liveOrders, setLiveOrders] = useState<any[]>(orders || []);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Sync latest customer profile and orders dynamically from database
+      fetchCustomerProfileAPI().then((prof) => {
+        if (prof && Array.isArray((prof as any).orders)) {
+          setLiveOrders((prof as any).orders);
+        } else if (orders && orders.length > 0) {
+          setLiveOrders(orders);
+        }
+      });
+    }
+  }, [isOpen, orders]);
+
   if (!isOpen) return null;
 
-  // Find orders for this customer strictly from real order data
-  const userOrders = orders.filter(
-    (o) =>
-      o.customerId === currentUser.id ||
-      (currentUser.customerId && o.customerId === currentUser.customerId)
-  );
+  // Real orders list from live database query or passed orders
+  const displayOrders =
+    liveOrders && liveOrders.length > 0
+      ? liveOrders
+      : orders && orders.length > 0
+      ? orders
+      : ((currentUser as any)?.orders || []);
 
   const isGold = currentUser.membershipTier?.includes('Gold');
   const isSilver = currentUser.membershipTier?.includes('Silver');
@@ -123,11 +140,11 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 <span>My Kiosk Orders & Pickup Status</span>
               </h4>
               <span className="text-[11px] text-stone-400 font-bold">
-                {userOrders.length} {userOrders.length === 1 ? 'Order' : 'Orders'}
+                {displayOrders.length} {displayOrders.length === 1 ? 'Order' : 'Orders'}
               </span>
             </div>
 
-            {userOrders.length === 0 ? (
+            {displayOrders.length === 0 ? (
               <div className="p-6 rounded-2xl bg-[#FAF5EF] border border-[#EFE8DE] text-center space-y-2">
                 <p className="text-xs font-bold text-stone-700">No Orders Yet</p>
                 <p className="text-[11px] text-stone-500">
@@ -136,71 +153,78 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
               </div>
             ) : (
               <div className="space-y-3">
-                {userOrders.map((ord) => (
-                  <div
-                    key={ord.id}
-                    className="p-4 rounded-2xl border border-stone-200 bg-white hover:border-primary/40 transition-all shadow-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-xs text-stone-900">
-                          {ord.orderNumber}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                            ord.status === 'paid'
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              : ord.status === 'claimed'
-                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                              : 'bg-amber-100 text-amber-800 border border-amber-200'
-                          }`}
-                        >
-                          {ord.status}
-                        </span>
-                      </div>
-
-                      <span className="font-black text-xs text-stone-900">
-                        {formatRupees(ord.totalPaise)}
-                      </span>
-                    </div>
-
-                    {/* Locker Compartment Callout */}
-                    {ord.lockerNumber && (
-                      <div className="mt-2.5 p-2 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-between">
+                {displayOrders.map((ord: any) => {
+                  const statusLower = String(ord.status || '').toLowerCase();
+                  return (
+                    <div
+                      key={ord.id}
+                      className="p-4 rounded-2xl border border-stone-200 bg-white hover:border-primary/40 transition-all shadow-xs"
+                    >
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[10px] font-black">
-                            📦
-                          </div>
-                          <div>
-                            <p className="text-[10px] text-amber-800 font-bold">
-                              Pickup Compartment: <span className="font-black text-amber-950">{ord.lockerNumber}</span>
-                            </p>
-                            <p className="text-[9px] text-amber-700 font-medium">
-                              {ord.status === 'paid'
-                                ? 'Solenoid Unlocked • Ready to open'
-                                : 'Dispensed & Completed'}
-                            </p>
-                          </div>
+                          <span className="font-black text-xs text-stone-900">
+                            {ord.orderNumber}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                              statusLower === 'paid'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                : statusLower === 'claimed'
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : 'bg-amber-100 text-amber-800 border border-amber-200'
+                            }`}
+                          >
+                            {ord.status}
+                          </span>
                         </div>
 
-                        {ord.status === 'paid' && (
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-black animate-pulse">
-                            OPEN DOOR
-                          </span>
-                        )}
+                        <span className="font-black text-xs text-stone-900">
+                          {formatRupees(ord.totalPaise)}
+                        </span>
                       </div>
-                    )}
 
-                    <div className="mt-2 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                      <span className="truncate max-w-[240px]">
-                        {ord.items.map((i) => `${i.product.name} (x${i.quantity})`).join(', ')}
-                      </span>
-                      <span className="shrink-0 text-[10px] text-stone-400 font-medium">
-                        {ord.createdAt}
-                      </span>
+                      {/* Locker Compartment Callout */}
+                      {ord.lockerNumber && (
+                        <div className="mt-2.5 p-2 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-[10px] font-black">
+                              📦
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-amber-800 font-bold">
+                                Pickup Compartment: <span className="font-black text-amber-950">{ord.lockerNumber}</span>
+                              </p>
+                              <p className="text-[9px] text-amber-700 font-medium">
+                                {statusLower === 'paid'
+                                  ? 'Solenoid Unlocked • Ready to open'
+                                  : 'Dispensed & Completed'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {statusLower === 'paid' && (
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-black animate-pulse">
+                              OPEN DOOR
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="mt-2 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
+                        <span className="truncate max-w-[240px]">
+                          {Array.isArray(ord.items) && ord.items.length > 0
+                            ? ord.items
+                                .map((i: any) => `${i.product?.name || i.productName || 'Snack'} (x${i.quantity})`)
+                                .join(', ')
+                            : 'QuickPick Snack'}
+                        </span>
+                        <span className="shrink-0 text-[10px] text-stone-400 font-medium">
+                          {ord.createdAt}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

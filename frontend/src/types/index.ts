@@ -73,6 +73,7 @@ export interface CustomerUser {
   lastOrderDate?: string;
   createdAt?: string;
   status?: 'active' | 'inactive';
+  orders?: any[];
 }
 
 export interface CategoryItem {

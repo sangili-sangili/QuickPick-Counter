@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../config/prisma.js';
+import { createAdminNotification } from '../services/notificationService.js';
 
 /**
  * POST /api/feedback
@@ -78,6 +79,14 @@ export const submitFeedback = async (req: Request, res: Response) => {
         console.warn('Could not update product rating:', err.message);
       }
     }
+
+    createAdminNotification({
+      title: `Customer Feedback: ${numRating} ★`,
+      message: sanitizedComment
+        ? `Review: "${sanitizedComment}" (Tags: ${sanitizedTags.join(', ') || 'None'})`
+        : `Customer submitted ${numRating}-star rating (Tags: ${sanitizedTags.join(', ') || 'None'}).`,
+      type: numRating >= 4 ? 'success' : 'info',
+    });
 
     return res.status(201).json({
       success: true,

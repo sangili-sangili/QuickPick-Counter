@@ -242,13 +242,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-stone-700">Password</label>
-                  <button
+                  {/* <button
                     type="button"
                     onClick={() => setErrorMessage('Demo password is: snackhub123')}
                     className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
                   >
                     Forgot password?
-                  </button>
+                  </button> */}
                 </div>
                 <div className="flex items-center bg-[#FAF5EF] border border-[#EFE8DE] rounded-xl px-3 py-2.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
                   <Lock className="w-4 h-4 text-stone-400 mr-2.5 shrink-0" />

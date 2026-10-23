@@ -121,17 +121,30 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {product.subtitle || product.description || 'Crispy delicious snack'}
           </p>
 
-          {/* Star Rating */}
+          {/* Dynamic Star Rating & Reviews */}
           <div className="flex items-center gap-1 pt-0.5 text-xs">
             <div className="flex items-center text-amber-400">
               <Star className="w-3 h-3 fill-amber-400 stroke-amber-400" />
             </div>
-            <span className="font-bold text-stone-800 text-[10px] sm:text-[11px]">
-              {product.rating || 4.8}
-            </span>
-            <span className="text-[10px] text-stone-400">
-              ({product.ratingCount || 120})
-            </span>
+            {product.ratingCount && product.ratingCount > 0 ? (
+              <>
+                <span className="font-bold text-stone-800 text-[10px] sm:text-[11px]">
+                  {Number(product.rating || 5).toFixed(1)}
+                </span>
+                <span className="text-[10px] text-stone-400">
+                  ({product.ratingCount})
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="font-bold text-stone-600 text-[10px] sm:text-[11px]">
+                  5.0
+                </span>
+                <span className="text-[10px] text-stone-400">
+                  (0)
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
