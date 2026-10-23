@@ -2,9 +2,12 @@ export interface Product {
   id: string;
   name: string;
   pricePaise: number; // Stored in paise (integer)
+  regularPricePaise?: number;
+  offerPricePaise?: number;
   stock: number;
   category: 'Snacks' | 'Drinks' | 'Chocolates' | 'Biscuits' | 'Combos' | 'Others';
   image: string;
+  galleryImages?: string[];
   description?: string;
   subtitle?: string;
   badge?: string;
@@ -12,6 +15,7 @@ export interface Product {
   rating?: number;
   ratingCount?: number;
   isFavorite?: boolean;
+  isActive?: boolean;
 }
 
 export interface CartItem {
@@ -60,3 +64,39 @@ export interface CustomerUser {
   avatar?: string;
   membershipTier?: string;
 }
+
+export interface CategoryItem {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  isActive: boolean;
+  productCount: number;
+  createdAt: string;
+}
+
+export interface AdminUser {
+  email: string;
+  name: string;
+  role: string;
+  avatar?: string;
+}
+
+export type LockerVisualState = 'available' | 'reserved' | 'occupied' | 'out_of_service';
+
+export interface SmartLocker {
+  id: string;
+  number: string; // 'L-01' to 'L-12'
+  name?: string;
+  status: LockerVisualState;
+  orderId?: string;
+  orderNumber?: string;
+  pickupStatus?: 'Awaiting Customer' | 'PIN Verified' | 'Dispensed' | 'Holding';
+  temperatureC?: number;
+  assignedAt?: string;
+  expiresInSeconds?: number;
+  doorState: 'locked' | 'unlocked' | 'open';
+}
+
+export type AdminLocker = SmartLocker;
+

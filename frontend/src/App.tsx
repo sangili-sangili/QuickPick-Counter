@@ -17,6 +17,7 @@ import { ConfirmCancelModal } from './components/common/ConfirmCancelModal';
 import { StockErrorModal } from './components/common/StockErrorModal';
 import { OrderDetailsModal } from './components/common/OrderDetailsModal';
 import { HelpModal } from './components/common/HelpModal';
+import { AdminLayout } from './components/admin/AdminLayout';
 import { INITIAL_PRODUCTS } from './data/mockProducts';
 import { Product, CartItem, Order, ToastMessage, CustomerUser } from './types';
 import { formatRupees } from './utils/format';
@@ -354,6 +355,17 @@ export default function App() {
 
   const wishlistedProducts = products.filter((p) => wishlistIds.includes(p.id));
 
+  // If visiting Admin Portal (/admin or /admin/*), render dedicated AdminLayout
+  if (location.pathname.startsWith('/admin')) {
+    return (
+      <AdminLayout
+        products={products}
+        onUpdateProducts={setProducts}
+        onGoToCustomerKiosk={() => navigate('/')}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF5EF] text-stone-900 flex flex-col selection:bg-primary selection:text-white">
       {/* Top Navbar */}
@@ -366,6 +378,7 @@ export default function App() {
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         onGoHome={() => navigate('/')}
+        onGoToAdmin={() => navigate('/admin')}
       />
 
       {/* Main Container with React Router Routing */}
@@ -524,6 +537,7 @@ export default function App() {
         onOpenHelp={() => setIsHelpModalOpen(true)}
         onGoHome={() => navigate('/')}
         onViewAll={() => navigate('/view-all')}
+        onGoToAdmin={() => navigate('/admin')}
       />
 
       {/* Floating Bottom Bar in Primary RED theme (only on catalog and view-all) */}

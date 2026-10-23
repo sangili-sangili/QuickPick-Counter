@@ -49,6 +49,19 @@ export default {
           text: '#1C1917',
           muted: '#78716C',
           border: '#EFE8DE',
+        },
+        admin: {
+          primary: '#636B2F',
+          primaryHover: '#525927',
+          secondary: '#BAC095',
+          accent: '#D4DE95',
+          dark: '#3D4127',
+          darkText: '#3D4127',
+          bg: '#F8F9F3',
+          card: '#FFFFFF',
+          border: '#E3E6D3',
+          sidebar: '#222514',
+          sidebarHover: '#2E321C',
         }
       },
       boxShadow: {

@@ -11,6 +11,7 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onLogout: () => void;
   onGoHome: () => void;
+  onGoToAdmin?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -22,6 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   onLogout,
   onGoHome,
+  onGoToAdmin,
 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -53,9 +55,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="text-lg sm:text-xl font-black tracking-tight text-stone-900 group-hover:text-primary transition-colors">
                 Snack<span className="text-primary">Hub</span>
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20">
-                Kiosk
-              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGoToAdmin?.();
+                }}
+                className="px-2 py-0.5 rounded-full bg-primary/10 hover:bg-primary hover:text-white text-primary text-[10px] font-black uppercase tracking-wider border border-primary/20 transition-all cursor-pointer"
+                title="Switch to Admin Portal"
+              >
+                Kiosk • Admin
+              </button>
             </div>
             <p className="text-[11px] text-stone-600 font-semibold leading-none mt-0.5">
               Crispy. Fast. <span className="text-primary font-bold">Always Fresh.</span>

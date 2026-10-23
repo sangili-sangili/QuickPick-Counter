@@ -5,12 +5,14 @@ interface FooterProps {
   onOpenHelp: () => void;
   onGoHome: () => void;
   onViewAll: () => void;
+  onGoToAdmin?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onOpenHelp,
   onGoHome,
   onViewAll,
+  onGoToAdmin,
 }) => {
   return (
     <footer className="mt-12 bg-white border-t border-[#EFE8DE] text-stone-700">
@@ -112,10 +114,22 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="mt-8 pt-6 border-t border-[#EFE8DE] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-400">
           <p>© 2026 SnackHub QuickPick Counter. All rights reserved.</p>
           <div className="flex items-center gap-4 font-medium">
-            <button onClick={onOpenHelp} className="hover:text-stone-600">
+            <button onClick={onOpenHelp} className="hover:text-stone-600 cursor-pointer">
               Kiosk Guide
             </button>
             <span>•</span>
+            {onGoToAdmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={onGoToAdmin}
+                  className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-primary font-bold text-[11px] transition-colors border border-stone-200 cursor-pointer"
+                >
+                  ⚙️ Admin Portal
+                </button>
+                <span>•</span>
+              </>
+            )}
             <span>Privacy</span>
             <span>•</span>
             <span>Terms</span>
