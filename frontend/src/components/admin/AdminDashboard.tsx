@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Package,
   CheckCircle,
@@ -53,16 +53,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Low stock products (stock <= 5)
   const lowStockProducts = products.filter((p) => p.stock <= 5);
 
-  // Sample analytics data for charts (Weekly order volume and revenue)
-  const sampleWeeklyData = [
-    { day: 'Mon', revenue: 1450, orders: 18, heightPct: 45 },
-    { day: 'Tue', revenue: 2100, orders: 26, heightPct: 65 },
-    { day: 'Wed', revenue: 1800, orders: 22, heightPct: 55 },
-    { day: 'Thu', revenue: 2750, orders: 34, heightPct: 85 },
-    { day: 'Fri', revenue: 3200, orders: 40, heightPct: 100 },
-    { day: 'Sat', revenue: 2900, orders: 36, heightPct: 90 },
-    { day: 'Sun', revenue: 2400, orders: 30, heightPct: 75 },
-  ];
+  // 100% Dynamic Weekly Analytics aggregated directly from live database orders
+  const weeklyAnalytics = useMemo(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Group database orders by day of week
+    const dayBuckets: Record<string, { revenue: number; orders: number }> = {
+      Mon: { revenue: 0, orders: 0 },
+      Tue: { revenue: 0, orders: 0 },
+      Wed: { revenue: 0, orders: 0 },
+      Thu: { revenue: 0, orders: 0 },
+      Fri: { revenue: 0, orders: 0 },
+      Sat: { revenue: 0, orders: 0 },
+      Sun: { revenue: 0, orders: 0 },
+    };
+
+    orders.forEach((o) => {
+      if (!o.createdAt) return;
+      const d = new Date(o.createdAt);
+      if (isNaN(d.getTime())) return;
+      const dayName = dayNames[d.getDay()];
+      if (dayBuckets[dayName]) {
+        dayBuckets[dayName].orders += 1;
+        if (o.status === 'paid' || o.status === 'claimed') {
+          dayBuckets[dayName].revenue += Math.round(o.totalPaise / 100);
+        }
+      }
+    });
+
+    const maxRevenue = Math.max(...Object.values(dayBuckets).map((d) => d.revenue), 1);
+
+    return days.map((day) => {
+      const bucket = dayBuckets[day];
+      const heightPct =
+        bucket.revenue > 0
+          ? Math.max(16, Math.min(100, Math.round((bucket.revenue / maxRevenue) * 100)))
+          : 0;
+
+      return {
+        day,
+        revenue: bucket.revenue,
+        orders: bucket.orders,
+        heightPct,
+      };
+    });
+  }, [orders]);
 
   // Dynamic Category Share distribution derived from live products
   const categoryCounts: Record<string, number> = {};
@@ -462,32 +498,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </p>
               </div>
 
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-[#F0F2E5] text-[#3D4127] border border-[#BAC095]/40 self-start sm:self-auto">
-                Sample Design Data
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-[#F0F2E5] text-[#636B2F] border border-[#BAC095]/40 self-start sm:self-auto flex items-center gap-1.5 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#636B2F] animate-pulse" />
+                Live Kiosk Telemetry
               </span>
             </div>
 
-            {/* SVG / CSS Bar Chart */}
+            {/* SVG / CSS Bar Chart with Definite Track Height */}
             <div className="pt-6 pb-2">
-              <div className="h-48 flex items-end justify-between gap-2 sm:gap-4 px-2 border-b border-[#E3E6D3]">
-                {sampleWeeklyData.map((item) => (
-                  <div key={item.day} className="flex-1 flex flex-col items-center gap-2 group">
+              <div className="h-52 flex items-end justify-between gap-2 sm:gap-4 px-2 pb-1 border-b border-[#E3E6D3]">
+                {weeklyAnalytics.map((item) => (
+                  <div
+                    key={item.day}
+                    className="flex-1 h-full flex flex-col justify-end items-center group relative cursor-pointer"
+                  >
                     {/* Tooltip on Hover */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold bg-[#3D4127] text-white px-2 py-1 rounded-lg shadow-md pointer-events-none whitespace-nowrap -translate-y-1">
-                      ₹{item.revenue} ({item.orders} orders)
+                    <div className="absolute top-0 opacity-0 group-hover:opacity-100 transition-all duration-150 text-[10px] font-bold bg-[#3D4127] text-white px-2 py-1 rounded-lg shadow-md pointer-events-none whitespace-nowrap z-20">
+                      ₹{item.revenue.toLocaleString()} ({item.orders} orders)
                     </div>
-                    {/* Bar */}
-                    <div
-                      style={{ height: `${item.heightPct}%` }}
-                      className="w-full max-w-[42px] rounded-t-xl bg-gradient-to-t from-[#636B2F] to-[#BAC095] group-hover:to-[#D4DE95] transition-all duration-300 shadow-xs"
-                    />
+
+                    {/* Value Badge above bar */}
+                    <span className="text-[10px] font-bold text-[#636B2F] mb-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                      ₹{item.revenue >= 1000 ? `${(item.revenue / 1000).toFixed(1)}k` : item.revenue}
+                    </span>
+
+                    {/* Bar Track & Fill with explicit pixel height */}
+                    <div className="w-full max-w-[42px] h-[135px] flex items-end justify-center">
+                      <div
+                        style={{ height: `${item.heightPct}%` }}
+                        className="w-full rounded-t-xl bg-gradient-to-t from-[#636B2F] via-[#889343] to-[#BAC095] group-hover:from-[#525926] group-hover:to-[#D4DE95] transition-all duration-500 shadow-xs"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
 
               {/* Day Labels */}
               <div className="flex items-center justify-between px-2 pt-2 text-[11px] font-bold text-[#3D4127]/70">
-                {sampleWeeklyData.map((item) => (
+                {weeklyAnalytics.map((item) => (
                   <div key={item.day} className="flex-1 text-center">
                     {item.day}
                   </div>
@@ -501,7 +549,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <span className="w-2 h-2 rounded-full bg-[#636B2F]" />
               Peak Kiosk Hours: 4:00 PM – 7:30 PM
             </span>
-            <span className="font-bold text-[#636B2F]">Average: 29 orders/day</span>
+            <span className="font-bold text-[#636B2F]">
+              7-Day Total: ₹{weeklyAnalytics.reduce((s, d) => s + d.revenue, 0).toLocaleString()}
+            </span>
           </div>
         </div>
 

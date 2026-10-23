@@ -141,8 +141,24 @@ export const AdminOrders: React.FC<AdminOrdersProps> = ({
       key: 'createdAt',
       header: 'Created At',
       sortable: true,
-      accessor: (o) => o.createdAt,
-      render: (o) => <span className="text-xs text-[#3D4127]/70">{o.createdAt}</span>,
+      accessor: (o) => {
+        try {
+          const d = new Date(o.createdAt);
+          return isNaN(d.getTime()) ? o.createdAt : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch {
+          return o.createdAt;
+        }
+      },
+      render: (o) => {
+        let display = o.createdAt;
+        try {
+          const d = new Date(o.createdAt);
+          if (!isNaN(d.getTime())) {
+            display = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+        } catch {}
+        return <span className="text-xs text-[#3D4127]/70 font-medium">{display}</span>;
+      },
     },
     {
       key: 'actions',

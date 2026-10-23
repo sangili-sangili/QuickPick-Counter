@@ -360,10 +360,169 @@ async function main() {
 
   console.log('✅ 12 Smart Lockers seeded');
 
-  // 8. Seed Initial Sample Orders linked to Customer profiles
+  // 8. Seed Sample Orders across the week linked to Customer profiles
   const now = new Date();
 
-  // Order 1: Paid & assigned to Locker L-07 for Alex Johnson
+  const getPastDate = (daysAgo: number, hour: number = 14) => {
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(hour, 15, 0, 0);
+    return d;
+  };
+
+  // Monday (4 days ago) Order
+  await prisma.order.create({
+    data: {
+      id: 'ord_1101',
+      orderNumber: 'ORD1101',
+      customerId: userAlex.customer!.id,
+      totalPaise: 145000, // ₹1,450.00
+      status: OrderStatus.CLAIMED,
+      createdAt: getPastDate(4, 11),
+      expiresAt: getPastDate(4, 12),
+      pickupClaimedAt: getPastDate(4, 11, 45),
+      claimedBy: 'PIN_VERIFIED',
+      items: {
+        create: [
+          { productId: pKitKat.id, quantity: 15, unitPricePaise: 5000 },
+          { productId: pCoke.id, quantity: 10, unitPricePaise: 4000 },
+          { productId: pLays.id, quantity: 10, unitPricePaise: 3000 },
+        ],
+      },
+    },
+  });
+
+  // Tuesday (3 days ago) Order
+  await prisma.order.create({
+    data: {
+      id: 'ord_1102',
+      orderNumber: 'ORD1102',
+      customerId: userPriya.customer!.id,
+      totalPaise: 210000, // ₹2,100.00
+      status: OrderStatus.CLAIMED,
+      createdAt: getPastDate(3, 14),
+      expiresAt: getPastDate(3, 15),
+      pickupClaimedAt: getPastDate(3, 14, 30),
+      claimedBy: 'PIN_VERIFIED',
+      items: {
+        create: [
+          { productId: pPringles.id, quantity: 10, unitPricePaise: 11000 },
+          { productId: pRedBull.id, quantity: 8, unitPricePaise: 12500 },
+        ],
+      },
+    },
+  });
+
+  // Wednesday (2 days ago) Order
+  await prisma.order.create({
+    data: {
+      id: 'ord_1103',
+      orderNumber: 'ORD1103',
+      customerId: userRahul.customer!.id,
+      totalPaise: 180000, // ₹1,800.00
+      status: OrderStatus.CLAIMED,
+      createdAt: getPastDate(2, 13),
+      expiresAt: getPastDate(2, 14),
+      pickupClaimedAt: getPastDate(2, 13, 20),
+      claimedBy: 'PIN_VERIFIED',
+      items: {
+        create: [
+          { productId: pOreo.id, quantity: 15, unitPricePaise: 4000 },
+          { productId: pKitKat.id, quantity: 12, unitPricePaise: 5000 },
+          { productId: pCoke.id, quantity: 15, unitPricePaise: 4000 },
+        ],
+      },
+    },
+  });
+
+  // Thursday (1 day ago) Order
+  await prisma.order.create({
+    data: {
+      id: 'ord_1104',
+      orderNumber: 'ORD1104',
+      customerId: userAnanya.customer!.id,
+      totalPaise: 260000, // ₹2,600.00
+      status: OrderStatus.CLAIMED,
+      createdAt: getPastDate(1, 16),
+      expiresAt: getPastDate(1, 17),
+      pickupClaimedAt: getPastDate(1, 16, 40),
+      claimedBy: 'PIN_VERIFIED',
+      items: {
+        create: [
+          { productId: pRedBull.id, quantity: 12, unitPricePaise: 12500 },
+          { productId: pPringles.id, quantity: 10, unitPricePaise: 11000 },
+        ],
+      },
+    },
+  });
+
+  // Saturday (6 days ago) Order
+  await prisma.order.create({
+    data: {
+      id: 'ord_1105',
+      orderNumber: 'ORD1105',
+      customerId: userAlex.customer!.id,
+      totalPaise: 290000, // ₹2,900.00
+      status: OrderStatus.CLAIMED,
+      createdAt: getPastDate(6, 17),
+      expiresAt: getPastDate(6, 18),
+      pickupClaimedAt: getPastDate(6, 17, 30),
+      claimedBy: 'PIN_VERIFIED',
+      items: {
+        create: [
+          { productId: pLays.id, quantity: 20, unitPricePaise: 3000 },
+          { productId: pCoke.id, quantity: 20, unitPricePaise: 4000 },
+          { productId: pKitKat.id, quantity: 30, unitPricePaise: 5000 },
+        ],
+      },
+    },
+  });
+
+  // Sunday (5 days ago) Order
+  await prisma.order.create({
+    data: {
+      id: 'ord_1106',
+      orderNumber: 'ORD1106',
+      customerId: userRahul.customer!.id,
+      totalPaise: 240000, // ₹2,400.00
+      status: OrderStatus.CLAIMED,
+      createdAt: getPastDate(5, 12),
+      expiresAt: getPastDate(5, 13),
+      pickupClaimedAt: getPastDate(5, 12, 15),
+      claimedBy: 'PIN_VERIFIED',
+      items: {
+        create: [
+          { productId: pPringles.id, quantity: 10, unitPricePaise: 11000 },
+          { productId: pOreo.id, quantity: 15, unitPricePaise: 4000 },
+          { productId: pRedBull.id, quantity: 8, unitPricePaise: 12500 },
+        ],
+      },
+    },
+  });
+
+  // Friday (Today): Earlier today claimed order
+  await prisma.order.create({
+    data: {
+      id: 'ord_1107',
+      orderNumber: 'ORD1107',
+      customerId: userAnanya.customer!.id,
+      totalPaise: 320000, // ₹3,200.00
+      status: OrderStatus.CLAIMED,
+      createdAt: new Date(now.getTime() - 14400000), // 4 hours ago today
+      expiresAt: new Date(now.getTime() - 14000000),
+      pickupClaimedAt: new Date(now.getTime() - 14200000),
+      claimedBy: 'PIN_VERIFIED',
+      items: {
+        create: [
+          { productId: pKitKat.id, quantity: 20, unitPricePaise: 5000 },
+          { productId: pRedBull.id, quantity: 12, unitPricePaise: 12500 },
+          { productId: pPringles.id, quantity: 10, unitPricePaise: 11000 },
+        ],
+      },
+    },
+  });
+
+  // Friday Active Order 1: Paid & assigned to Locker L-07 for Alex Johnson
   const orderPaid = await prisma.order.create({
     data: {
       id: 'ord_1234',
@@ -371,6 +530,7 @@ async function main() {
       customerId: userAlex.customer!.id,
       totalPaise: 11000,
       status: OrderStatus.PAID,
+      createdAt: now,
       expiresAt: new Date(now.getTime() + 90000),
       lockerNumber: 'L-07',
       items: {
@@ -382,7 +542,7 @@ async function main() {
     },
   });
 
-  // Order 2: Active 120s Hold in Locker L-02 for Priya Sharma
+  // Friday Active Order 2: Active 120s Hold in Locker L-02 for Priya Sharma
   await prisma.order.create({
     data: {
       id: 'ord_1233',
@@ -390,6 +550,7 @@ async function main() {
       customerId: userPriya.customer!.id,
       totalPaise: 7000,
       status: OrderStatus.UNPAID,
+      createdAt: now,
       expiresAt: new Date(now.getTime() + 45000),
       lockerNumber: 'L-02',
       items: {
@@ -401,7 +562,7 @@ async function main() {
     },
   });
 
-  // Order 3: Past Claimed Order for Rahul Verma
+  // Friday Past Claimed Order for Rahul Verma
   await prisma.order.create({
     data: {
       id: 'ord_1231',
@@ -409,9 +570,10 @@ async function main() {
       customerId: userRahul.customer!.id,
       totalPaise: 5000,
       status: OrderStatus.CLAIMED,
-      expiresAt: new Date(now.getTime() - 3600000),
+      createdAt: new Date(now.getTime() - 3600000),
+      expiresAt: new Date(now.getTime() - 3500000),
       lockerNumber: 'L-01',
-      pickupClaimedAt: new Date(now.getTime() - 3500000),
+      pickupClaimedAt: new Date(now.getTime() - 3550000),
       claimedBy: 'PIN_VERIFIED',
       items: {
         create: [

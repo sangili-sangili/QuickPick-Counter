@@ -61,16 +61,41 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
       itemsSummary: o.items.map((i) => `${i.product.name} (x${i.quantity})`).join(', '),
     }));
 
-    // 5. Weekly Analytics Summary
-    const sampleWeeklyAnalytics = [
-      { day: 'Mon', revenue: 1450, orders: 18, heightPct: 45 },
-      { day: 'Tue', revenue: 2100, orders: 26, heightPct: 65 },
-      { day: 'Wed', revenue: 1800, orders: 22, heightPct: 55 },
-      { day: 'Thu', revenue: 2600, orders: 32, heightPct: 80 },
-      { day: 'Fri', revenue: 3200, orders: 40, heightPct: 100 },
-      { day: 'Sat', revenue: 2900, orders: 36, heightPct: 90 },
-      { day: 'Sun', revenue: 2400, orders: 30, heightPct: 75 },
-    ];
+    // 5. Dynamic Weekly Analytics from real orders in database
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    const weeklyDataMap: Record<string, { revenue: number; orders: number }> = {
+      Mon: { revenue: 0, orders: 0 },
+      Tue: { revenue: 0, orders: 0 },
+      Wed: { revenue: 0, orders: 0 },
+      Thu: { revenue: 0, orders: 0 },
+      Fri: { revenue: 0, orders: 0 },
+      Sat: { revenue: 0, orders: 0 },
+      Sun: { revenue: 0, orders: 0 },
+    };
+
+    orders.forEach((o) => {
+      const dayIdx = new Date(o.createdAt).getDay();
+      const dayName = dayNames[dayIdx];
+      if (weeklyDataMap[dayName]) {
+        weeklyDataMap[dayName].orders += 1;
+        if (o.status === 'PAID' || o.status === 'CLAIMED') {
+          weeklyDataMap[dayName].revenue += Math.round(o.totalPaise / 100);
+        }
+      }
+    });
+
+    const maxWeeklyRev = Math.max(...Object.values(weeklyDataMap).map((d) => d.revenue), 1);
+    const weeklyAnalytics = days.map((day) => ({
+      day,
+      revenue: weeklyDataMap[day].revenue,
+      orders: weeklyDataMap[day].orders,
+      heightPct:
+        weeklyDataMap[day].revenue > 0
+          ? Math.max(16, Math.min(100, Math.round((weeklyDataMap[day].revenue / maxWeeklyRev) * 100)))
+          : 0,
+    }));
 
     return res.status(200).json({
       success: true,
@@ -114,7 +139,7 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
         temperatureC: l.temperatureC,
         doorState: l.doorState,
       })),
-      weeklyAnalytics: sampleWeeklyAnalytics,
+      weeklyAnalytics,
     });
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error);
