@@ -120,6 +120,7 @@ model Order {
   items           OrderItem[]
   webhookEvents   WebhookEvent[]
   locker          SmartLocker?   @relation(fields: [lockerNumber], references: [number])
+  feedbacks       Feedback[]
 
   @@index([customerId])
   @@index([status])
@@ -212,3 +213,17 @@ model AddToCart {
   @@index([userId])
   @@index([productId])
 }
+
+model Feedback {
+  id        String   @id @default(cuid())
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  rating    Int      // 1 to 5 stars
+  tags      String[] @default([]) // e.g. ['⚡ Ultra Fast Kiosk', '🍿 Fresh & Tasty Snacks']
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([rating])
+}
+

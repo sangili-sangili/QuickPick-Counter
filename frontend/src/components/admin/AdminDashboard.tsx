@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Package,
   CheckCircle,
@@ -14,6 +14,7 @@ import {
   AlertOctagon,
   Eye,
   Box,
+  ChevronDown,
 } from 'lucide-react';
 import { Order, Product, AdminLocker } from '../../types';
 import { formatRupees } from '../../utils/format';
@@ -50,8 +51,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     .filter((o) => o.status === 'paid' || o.status === 'claimed')
     .reduce((sum, o) => sum + o.totalPaise, 0);
 
-  // Low stock products (stock <= 5)
-  const lowStockProducts = products.filter((p) => p.stock <= 5);
+  // Low stock products responsive state & calculation (stock <= 5)
+  const [showAllLowStock, setShowAllLowStock] = useState(false);
+  const [lowStockFilter, setLowStockFilter] = useState<'all' | 'out_of_stock' | 'critical'>('all');
+
+  // Urgency sorted: 0 stock (Out of Stock) first, then 1, 2, 3...
+  const allLowStockProducts = useMemo(() => {
+    return products
+      .filter((p) => p.stock <= 5)
+      .sort((a, b) => a.stock - b.stock);
+  }, [products]);
+
+  const outOfStockCount = useMemo(
+    () => allLowStockProducts.filter((p) => p.stock === 0).length,
+    [allLowStockProducts]
+  );
+  const criticalStockCount = useMemo(
+    () => allLowStockProducts.filter((p) => p.stock > 0).length,
+    [allLowStockProducts]
+  );
+
+  const filteredLowStockProducts = useMemo(() => {
+    if (lowStockFilter === 'out_of_stock') {
+      return allLowStockProducts.filter((p) => p.stock === 0);
+    }
+    if (lowStockFilter === 'critical') {
+      return allLowStockProducts.filter((p) => p.stock > 0);
+    }
+    return allLowStockProducts;
+  }, [allLowStockProducts, lowStockFilter]);
+
+  const INITIAL_LOW_STOCK_LIMIT = 6;
+  const displayedLowStock = showAllLowStock
+    ? filteredLowStockProducts
+    : filteredLowStockProducts.slice(0, INITIAL_LOW_STOCK_LIMIT);
 
   // 100% Dynamic Weekly Analytics aggregated directly from live database orders
   const weeklyAnalytics = useMemo(() => {
@@ -420,18 +453,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       </div>
 
-      {/* Low Stock Products Section */}
+      {/* Low Stock Products Section (Responsive & Resilient for 20+ Items) */}
       <div className="bg-white rounded-3xl border border-[#E3E6D3] shadow-xs p-5 sm:p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
-              <AlertTriangle className="w-4 h-4" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                outOfStockCount > 0
+                  ? 'bg-red-50 border-red-200 text-red-600'
+                  : 'bg-amber-50 border-amber-200 text-amber-700'
+              }`}
+            >
+              <AlertTriangle className="w-4.5 h-4.5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-[#3D4127]">
-                Low Stock Alert Products ({lowStockProducts.length})
-              </h3>
-              <p className="text-xs text-[#3D4127]/60">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-black text-[#3D4127]">
+                  Low Stock Alert Products ({allLowStockProducts.length})
+                </h3>
+                {outOfStockCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-700 border border-red-200">
+                    {outOfStockCount} Out of Stock
+                  </span>
+                )}
+                {criticalStockCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                    {criticalStockCount} Critical (≤5)
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-[#3D4127]/60 mt-0.5">
                 Snacks requiring immediate replenishment inside dispenser compartments
               </p>
             </div>
@@ -440,43 +491,174 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <button
             type="button"
             onClick={() => onNavigateTab('products')}
-            className="text-xs font-bold text-[#636B2F] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-[#636B2F] hover:underline flex items-center gap-1 cursor-pointer self-start sm:self-auto"
           >
             <span>Manage Inventory</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
-        {lowStockProducts.length === 0 ? (
+        {/* Filter Pills (Shown when low-stock items exist) */}
+        {allLowStockProducts.length > 0 && (
+          <div className="flex items-center justify-between gap-2 flex-wrap pb-3 mb-3 border-b border-[#E3E6D3]/60">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setLowStockFilter('all')}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  lowStockFilter === 'all'
+                    ? 'bg-[#636B2F] text-white shadow-xs'
+                    : 'bg-[#F4F6EC] text-[#3D4127]/80 hover:bg-[#EAEED8]'
+                }`}
+              >
+                All ({allLowStockProducts.length})
+              </button>
+              {outOfStockCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setLowStockFilter('out_of_stock')}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    lowStockFilter === 'out_of_stock'
+                      ? 'bg-red-600 text-white shadow-xs'
+                      : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                  }`}
+                >
+                  Out of Stock ({outOfStockCount})
+                </button>
+              )}
+              {criticalStockCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setLowStockFilter('critical')}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    lowStockFilter === 'critical'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200'
+                  }`}
+                >
+                  Low Stock ({criticalStockCount})
+                </button>
+              )}
+            </div>
+
+            <div className="text-[11px] font-semibold text-[#3D4127]/60">
+              {filteredLowStockProducts.length > INITIAL_LOW_STOCK_LIMIT ? (
+                <span>
+                  Showing{' '}
+                  <strong className="text-[#3D4127]">{displayedLowStock.length}</strong> of{' '}
+                  <strong className="text-[#3D4127]">{filteredLowStockProducts.length}</strong> items
+                </span>
+              ) : (
+                <span>{filteredLowStockProducts.length} items</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {filteredLowStockProducts.length === 0 ? (
           <div className="p-6 text-center rounded-2xl bg-[#F8F9F3] border border-[#E3E6D3] text-xs font-bold text-emerald-800">
-            ✓ All snack items have healthy stock levels (&gt; 5 units).
+            {allLowStockProducts.length === 0
+              ? '✓ All snack items have healthy stock levels (> 5 units).'
+              : '✓ No items match the selected stock filter.'}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {lowStockProducts.map((p) => (
-              <div
-                key={p.id}
-                onClick={() => onNavigateTab('products')}
-                className="p-3.5 rounded-2xl bg-[#FCFDF9] border border-[#BAC095]/40 hover:border-[#636B2F] hover:shadow-xs transition-all flex items-center gap-3 cursor-pointer"
-              >
-                <div className="w-12 h-12 rounded-xl bg-[#F0F2E5] border border-[#BAC095]/30 overflow-hidden flex items-center justify-center p-1 shrink-0">
-                  <img src={p.image} alt={p.name} className="w-full h-full object-contain" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-black text-[#3D4127] text-xs truncate">{p.name}</div>
-                  <div className="text-[10px] text-[#3D4127]/60">{p.category}</div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase bg-red-100 text-red-800 border border-red-200">
-                      {p.stock} left
-                    </span>
-                    <span className="text-[10px] font-bold text-[#636B2F]">
-                      {p.stock === 0 ? 'Out of Stock' : 'Critical Stock'}
-                    </span>
-                  </div>
-                </div>
+          <>
+            {/* Scrollable Container with max height when expanded to safeguard responsive layout */}
+            <div
+              className={`transition-all duration-300 ${
+                showAllLowStock
+                  ? 'max-h-[460px] overflow-y-auto pr-1'
+                  : ''
+              }`}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {displayedLowStock.map((p) => {
+                  const isDepleted = p.stock === 0;
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => onNavigateTab('products')}
+                      className={`p-3.5 rounded-2xl border transition-all flex items-center gap-3 cursor-pointer group ${
+                        isDepleted
+                          ? 'bg-red-50/40 border-red-200/80 hover:border-red-400 hover:shadow-xs'
+                          : 'bg-[#FCFDF9] border-[#BAC095]/40 hover:border-[#636B2F] hover:shadow-xs'
+                      }`}
+                    >
+                      <div
+                        className={`w-12 h-12 rounded-xl border overflow-hidden flex items-center justify-center p-1 shrink-0 relative ${
+                          isDepleted
+                            ? 'bg-red-50 border-red-200'
+                            : 'bg-[#F0F2E5] border-[#BAC095]/30'
+                        }`}
+                      >
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className="font-black text-[#3D4127] text-xs truncate group-hover:text-[#636B2F] transition-colors"
+                          title={p.name}
+                        >
+                          {p.name}
+                        </div>
+                        <div className="text-[10px] text-[#3D4127]/60 truncate">
+                          {p.category} • {formatRupees(p.pricePaise)}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${
+                              isDepleted
+                                ? 'bg-red-600 text-white shadow-2xs'
+                                : 'bg-red-100 text-red-800 border border-red-200'
+                            }`}
+                          >
+                            {p.stock} left
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold ${
+                              isDepleted ? 'text-red-600' : 'text-[#636B2F]'
+                            }`}
+                          >
+                            {isDepleted ? 'Out of Stock' : 'Critical Stock'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </div>
+
+            {/* Expand / Collapse Button if > INITIAL_LOW_STOCK_LIMIT items */}
+            {filteredLowStockProducts.length > INITIAL_LOW_STOCK_LIMIT && (
+              <div className="mt-4 pt-3 border-t border-[#E3E6D3]/60 flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs text-[#3D4127]/70 font-medium">
+                  {showAllLowStock
+                    ? `Showing all ${filteredLowStockProducts.length} items (scroll enabled)`
+                    : `+${filteredLowStockProducts.length - INITIAL_LOW_STOCK_LIMIT} more low stock items hidden`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAllLowStock(!showAllLowStock)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#636B2F] bg-[#F4F6EC] hover:bg-[#EAEED8] border border-[#BAC095]/50 transition-all cursor-pointer shadow-2xs"
+                >
+                  <span>
+                    {showAllLowStock
+                      ? `Show Top ${INITIAL_LOW_STOCK_LIMIT} Most Critical`
+                      : `View All (${filteredLowStockProducts.length}) Products`}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      showAllLowStock ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

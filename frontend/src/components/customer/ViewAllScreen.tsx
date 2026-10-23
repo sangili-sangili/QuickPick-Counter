@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
-import { Product, CartItem } from '../../types';
+import { Product, CartItem, CategoryItem } from '../../types';
 import { ProductCard } from './ProductCard';
 import { Category } from './CategoryTabs';
 
 interface ViewAllScreenProps {
   products: Product[];
+  categories?: CategoryItem[];
   cart: CartItem[];
   wishlistIds: string[];
   onBackToHome: () => void;
@@ -19,6 +20,7 @@ const ITEMS_PER_PAGE = 8;
 
 export const ViewAllScreen: React.FC<ViewAllScreenProps> = ({
   products,
+  categories = [],
   cart,
   wishlistIds,
   onBackToHome,
@@ -32,7 +34,13 @@ export const ViewAllScreen: React.FC<ViewAllScreenProps> = ({
   const [sortBy, setSortBy] = useState<'popular' | 'price-asc' | 'price-desc' | 'rating'>('popular');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const categories: Category[] = ['All', 'Snacks', 'Drinks', 'Chocolates', 'Biscuits', 'Combos'];
+  // Dynamic Categories from DB (with fallback to unique product categories)
+  const categoryList: Category[] = [
+    'All',
+    ...(categories.length > 0
+      ? categories.map((c) => c.name)
+      : Array.from(new Set(products.map((p) => p.category)))),
+  ];
 
   // Filtering
   let filtered = products.filter((p) => {
@@ -101,7 +109,7 @@ export const ViewAllScreen: React.FC<ViewAllScreenProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Category Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {categories.map((cat) => (
+          {categoryList.map((cat) => (
             <button
               key={cat}
               onClick={() => {

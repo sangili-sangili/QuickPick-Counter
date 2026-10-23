@@ -130,9 +130,21 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               </div>
 
               <div className="text-right shrink-0">
-                <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
-                  {formatRupees(product.pricePaise, true)}
-                </span>
+                <div className="flex items-baseline gap-2 justify-end">
+                  <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
+                    {formatRupees(product.pricePaise, true)}
+                  </span>
+                  {product.regularPricePaise && product.regularPricePaise > product.pricePaise && (
+                    <span className="text-sm sm:text-base text-stone-400 line-through font-semibold">
+                      {formatRupees(product.regularPricePaise, true)}
+                    </span>
+                  )}
+                </div>
+                {product.regularPricePaise && product.regularPricePaise > product.pricePaise && (
+                  <span className="text-[11px] font-black text-emerald-600 uppercase tracking-tight block">
+                    Save {formatRupees(product.regularPricePaise - product.pricePaise, true)} ({Math.round(((product.regularPricePaise - product.pricePaise) / product.regularPricePaise) * 100)}% OFF)
+                  </span>
+                )}
               </div>
             </div>
 

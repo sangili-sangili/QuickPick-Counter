@@ -24,6 +24,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const isOutOfStock = product.stock <= 0;
   const isMaxStockReached = quantityInCart >= product.stock;
+  const hasDiscount = Boolean(
+    product.regularPricePaise && product.regularPricePaise > product.pricePaise
+  );
+  const discountPct = hasDiscount
+    ? Math.round(
+        ((product.regularPricePaise! - product.pricePaise) /
+          product.regularPricePaise!) *
+          100
+      )
+    : 0;
 
   let badgeColor = 'bg-primary text-white';
   if (product.badgeType === 'amber') {
@@ -45,6 +55,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               className={`px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider ${badgeColor} shadow-xs`}
             >
               {product.badge}
+            </span>
+          ) : hasDiscount ? (
+            <span className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {discountPct}% OFF
             </span>
           ) : product.stock <= 5 && product.stock > 0 ? (
             <span className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">
@@ -123,11 +137,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Bottom Footer: Price & Primary Red Circular '+' Button / Stepper */}
-      <div className="mt-3 pt-1.5 flex items-center justify-between">
-        <div className="flex items-baseline">
-          <span className="text-sm sm:text-base font-black text-stone-900 tracking-tight">
-            {formatRupees(product.pricePaise, true)}
-          </span>
+      <div className="mt-3 pt-1.5 flex items-center justify-between gap-2">
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-sm sm:text-base font-black text-stone-900 tracking-tight">
+              {formatRupees(product.pricePaise, true)}
+            </span>
+            {hasDiscount && (
+              <span className="text-[10px] sm:text-[11px] text-stone-400 line-through font-semibold">
+                {formatRupees(product.regularPricePaise!, true)}
+              </span>
+            )}
+          </div>
+          {hasDiscount && (
+            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-tight">
+              {discountPct}% OFF
+            </span>
+          )}
         </div>
 
         {quantityInCart > 0 ? (

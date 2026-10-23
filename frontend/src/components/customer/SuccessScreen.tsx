@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Order } from '../../types';
 import { formatTime } from '../../utils/format';
+import { submitFeedbackAPI } from '../../services/api';
 
 interface SuccessScreenProps {
   order: Order;
@@ -40,6 +41,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>(['⚡ Ultra Fast Kiosk']);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [isRatingSubmitted, setIsRatingSubmitted] = useState(false);
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
   // Trigger celebration confetti on mount
   useEffect(() => {
@@ -76,17 +78,33 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
     }
   };
 
-  const handleSubmitRating = () => {
+  const handleSubmitRating = async () => {
     if (rating === 0) return;
-    setIsRatingSubmitted(true);
+    setIsSubmittingFeedback(true);
     try {
-      confetti({
-        particleCount: 40,
-        spread: 50,
-        origin: { y: 0.8 },
-        colors: ['#F59E0B', '#E2231A'],
+      await submitFeedbackAPI({
+        orderId: order.id,
+        rating,
+        tags: selectedTags,
+        comment: feedbackComment,
       });
-    } catch (e) {}
+
+      setIsRatingSubmitted(true);
+      try {
+        confetti({
+          particleCount: 40,
+          spread: 50,
+          origin: { y: 0.8 },
+          colors: ['#F59E0B', '#E2231A'],
+        });
+      } catch (e) {}
+    } catch (err) {
+      console.error('Failed to submit feedback:', err);
+      // Still show thank you
+      setIsRatingSubmitted(true);
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
   };
 
   const getRatingLabel = (stars: number) => {
@@ -285,9 +303,10 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
               {/* Submit Rating Button */}
               <button
                 onClick={handleSubmitRating}
-                className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-primary hover:bg-primary-hover shadow-sm transition-all active:scale-98"
+                disabled={isSubmittingFeedback}
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-black text-white bg-primary hover:bg-primary-hover shadow-sm transition-all active:scale-98 disabled:opacity-70 cursor-pointer"
               >
-                Submit Rating & Feedback
+                {isSubmittingFeedback ? 'Saving Rating...' : 'Submit Rating & Feedback'}
               </button>
             </div>
           ) : (

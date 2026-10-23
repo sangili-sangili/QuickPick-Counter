@@ -12,14 +12,24 @@ app.use(express.json());
 
 import { prisma } from './config/prisma.js';
 import customerRoutes from './routes/customerRoutes.js';
+import customerWebRoutes from './routes/customerWebRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import kioskRoutes from './routes/kioskRoutes.js';
+import { startStockRevertCron, revertExpiredOrdersAndStock } from './services/stockRevertCronJob.js';
 
+// Mount API routes
 app.use('/api', kioskRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/customer', customerWebRoutes);
+
+// Manual trigger for stock reversion if needed
+app.post('/api/orders/revert-expired', async (_req, res) => {
+  const result = await revertExpiredOrdersAndStock();
+  res.json({ success: true, ...result });
+});
 
 app.get('/health', async (_req, res) => {
   try {
@@ -42,6 +52,8 @@ app.get('/health', async (_req, res) => {
 
 app.listen(port, () => {
   console.log(`🚀 QuickPick Counter Backend running on port ${port}`);
+  // Start the background cron job for automatic stock & locker reversion
+  startStockRevertCron(10000); // Check every 10 seconds
 });
 
 export default app;

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Navbar } from './components/customer/Navbar';
 import { HeroBanner } from './components/customer/HeroBanner';
-import { CategoryTabs, Category } from './components/customer/CategoryTabs';
+import { CategoryTabs } from './components/customer/CategoryTabs';
 import { ProductCard } from './components/customer/ProductCard';
 import { ProductDetailsModal } from './components/customer/ProductDetailsModal';
 import { AuthModal } from './components/customer/AuthModal';
@@ -19,21 +19,43 @@ import { StockErrorModal } from './components/common/StockErrorModal';
 import { OrderDetailsModal } from './components/common/OrderDetailsModal';
 import { HelpModal } from './components/common/HelpModal';
 import { AdminLayout } from './components/admin/AdminLayout';
-import { INITIAL_PRODUCTS } from './data/mockProducts';
-import { Product, CartItem, Order, ToastMessage, CustomerUser } from './types';
+import { Product, CartItem, Order, ToastMessage, CustomerUser, CategoryItem } from './types';
 import { formatRupees } from './utils/format';
-import { ShoppingBag, ArrowRight } from 'lucide-react';
-import { fetchProductsAPI, createOrderAPI, claimPickupAPI } from './services/api';
+import { ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
+import {
+  fetchProductsAPI,
+  fetchCategoriesAPI,
+  fetchWishlistAPI,
+  addToWishlistAPI,
+  removeFromWishlistAPI,
+  fetchCartAPI,
+  addToCartAPI,
+  updateCartItemAPI,
+  removeCartItemAPI,
+  clearCartAPI,
+  createOrderAPI,
+  confirmOrderPaymentAPI,
+  claimPickupAPI,
+  fetchCustomerProfileAPI,
+  customerLogoutAPI,
+} from './services/api';
 
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [selectedCategory, setSelectedCategory] = useState<Category>('All');
+  // Live Database States
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+
+  // Filter & Search states
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Cart & Wishlist states
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlistIds, setWishlistIds] = useState<string[]>(['prod_1', 'prod_3']);
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
 
   // Customer Auth state (persisted across sessions)
@@ -45,14 +67,12 @@ export default function App() {
       return null;
     }
   });
+
+  // Modal open states
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-
-  // Product Details Modal state
   const [selectedProductForModal, setSelectedProductForModal] = useState<Product | null>(null);
   const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
-
-  // Other modals state
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
   const [isConfirmCancelOpen, setIsConfirmCancelOpen] = useState(false);
@@ -79,30 +99,71 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Try fetching live products from backend on mount
+  // Initial Data Fetching from Database (Active Categories, Products, Profile, Cart, Wishlist)
   useEffect(() => {
+    // 1. Fetch Active Categories
+    fetchCategoriesAPI().then((cats) => {
+      setCategories(cats);
+    });
+
+    // 2. Fetch Active Products
     fetchProductsAPI().then((prods) => {
-      if (prods && prods.length > 0) {
-        setProducts(prods);
+      setProducts(prods);
+      setIsLoadingInitial(false);
+    });
+
+    // 3. Sync customer profile if logged in
+    fetchCustomerProfileAPI().then((prof) => {
+      if (prof) {
+        setCurrentUser(prof);
+        try {
+          localStorage.setItem('snackhub_customer', JSON.stringify(prof));
+        } catch {}
+      }
+    });
+
+    // 4. Sync wishlist
+    fetchWishlistAPI().then((wProds) => {
+      if (wProds && wProds.length > 0) {
+        setWishlistIds(wProds.map((p) => p.id));
+      }
+    });
+
+    // 5. Sync cart
+    fetchCartAPI().then((cartData) => {
+      if (cartData && cartData.items && cartData.items.length > 0) {
+        setCart(
+          cartData.items.map((i) => ({
+            product: i.product,
+            quantity: i.quantity,
+          }))
+        );
       }
     });
   }, []);
 
-  // Filter products for home catalog
-  const filteredProducts = products.filter((prod) => {
-    const matchesCategory =
-      selectedCategory === 'All' || prod.category === selectedCategory;
-    const matchesSearch =
-      prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (prod.subtitle &&
-        prod.subtitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (prod.description &&
-        prod.description.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  // Filter products for Home screen (Category & Search)
+  const filteredProducts = useMemo(() => {
+    return products.filter((prod) => {
+      const matchesCategory =
+        selectedCategory === 'All' ||
+        prod.category.toLowerCase() === selectedCategory.toLowerCase() ||
+        prod.categoryId === selectedCategory;
 
-  // Limit Home Page to max 8 products
-  const homeProducts = filteredProducts.slice(0, 8);
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        prod.name.toLowerCase().includes(q) ||
+        (prod.subtitle && prod.subtitle.toLowerCase().includes(q)) ||
+        (prod.description && prod.description.toLowerCase().includes(q)) ||
+        prod.category.toLowerCase().includes(q);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, selectedCategory, searchQuery]);
+
+  // Limit Home Page to top 8 items
+  const homeProducts = useMemo(() => filteredProducts.slice(0, 8), [filteredProducts]);
 
   // Product details modal handlers
   const handleOpenProductDetails = (product: Product) => {
@@ -116,35 +177,60 @@ export default function App() {
   };
 
   // Customer Auth handlers
-  const handleLoginSuccess = (user: CustomerUser) => {
+  const handleLoginSuccess = async (user: CustomerUser) => {
     setCurrentUser(user);
     try {
       localStorage.setItem('snackhub_customer', JSON.stringify(user));
     } catch {}
     addToast('success', `Welcome, ${user.name}!`);
+
+    // Sync user's saved wishlist and cart from database
+    const [serverWishlist, serverCart, freshProfile] = await Promise.all([
+      fetchWishlistAPI(),
+      fetchCartAPI(),
+      fetchCustomerProfileAPI(),
+    ]);
+
+    if (freshProfile) {
+      setCurrentUser(freshProfile);
+    }
+    if (serverWishlist && serverWishlist.length > 0) {
+      setWishlistIds(serverWishlist.map((p) => p.id));
+    }
+    if (serverCart && serverCart.items && serverCart.items.length > 0) {
+      setCart(
+        serverCart.items.map((i) => ({
+          product: i.product,
+          quantity: i.quantity,
+        }))
+      );
+    }
   };
 
   const handleLogout = () => {
+    customerLogoutAPI();
     setCurrentUser(null);
-    try {
-      localStorage.removeItem('snackhub_customer');
-    } catch {}
+    setCart([]);
+    setWishlistIds([]);
     addToast('info', 'Signed out successfully.');
   };
 
-  // Wishlist toggle
-  const handleToggleWishlist = (productId: string) => {
-    if (wishlistIds.includes(productId)) {
+  // Wishlist API Toggle
+  const handleToggleWishlist = async (productId: string) => {
+    const isSaved = wishlistIds.includes(productId);
+    if (isSaved) {
       setWishlistIds((prev) => prev.filter((id) => id !== productId));
+      await removeFromWishlistAPI(productId);
       addToast('info', 'Removed from wishlist');
     } else {
       setWishlistIds((prev) => [...prev, productId]);
+      await addToWishlistAPI(productId);
       addToast('success', 'Added to wishlist');
     }
   };
 
-  // Cart operations
-  const handleAddToCart = (product: Product) => {
+  // Cart API Operations
+  const handleAddToCart = async (product: Product) => {
     const existing = cart.find((item) => item.product.id === product.id);
     const currentQty = existing ? existing.quantity : 0;
 
@@ -169,6 +255,9 @@ export default function App() {
     } else {
       setCart((prev) => [...prev, { product, quantity: 1 }]);
     }
+
+    await addToCartAPI(product.id, 1);
+    addToast('success', `${product.name} added to cart`);
   };
 
   const handleUpdateQuantityFromModal = (product: Product, quantity: number) => {
@@ -198,10 +287,11 @@ export default function App() {
       }
     });
 
+    updateCartItemAPI(product.id, quantity);
     addToast('success', `${product.name} updated in cart`);
   };
 
-  const handleUpdateQuantity = (productId: string, quantity: number) => {
+  const handleUpdateQuantity = async (productId: string, quantity: number) => {
     if (quantity <= 0) {
       handleRemoveItem(productId);
       return;
@@ -223,17 +313,21 @@ export default function App() {
         item.product.id === productId ? { ...item, quantity } : item
       )
     );
+
+    await updateCartItemAPI(productId, quantity);
   };
 
-  const handleRemoveItem = (productId: string) => {
+  const handleRemoveItem = async (productId: string) => {
     setCart((prev) => prev.filter((item) => item.product.id !== productId));
+    await removeCartItemAPI(productId);
   };
 
-  const handleClearCart = () => {
+  const handleClearCart = async () => {
     setCart([]);
+    await clearCartAPI();
   };
 
-  // Order submission & stock hold
+  // Order submission & stock hold in Database
   const handlePlaceOrder = async () => {
     if (cart.length === 0) return;
 
@@ -244,77 +338,81 @@ export default function App() {
         quantity: item.quantity,
       }));
 
-      const result = await createOrderAPI(orderPayload);
-      const totalPaise = cart.reduce(
-        (sum, item) => sum + item.product.pricePaise * item.quantity,
-        0
-      );
+      const result = await createOrderAPI({
+        items: orderPayload,
+        customerId: currentUser?.customerId || currentUser?.id,
+      });
+
+      if (!result.success || !result.orderId) {
+        throw new Error(result.error || 'Failed to place order');
+      }
+
+      const totalPaise =
+        result.totalPaise ||
+        cart.reduce(
+          (sum, item) => sum + item.product.pricePaise * item.quantity,
+          0
+        );
 
       const newOrder: Order = {
         id: result.orderId,
-        orderNumber: result.orderNumber,
+        orderNumber: result.orderNumber || `ORD${Math.floor(1000 + Math.random() * 9000)}`,
         items: [...cart],
         totalPaise,
         status: 'unpaid',
         createdAt: new Date().toISOString(),
         expiresInSeconds: result.expiresInSeconds || 120,
         expiresAt: Date.now() + (result.expiresInSeconds || 120) * 1000,
-        lockerNumber: 'L-07',
+        lockerNumber: result.lockerNumber || 'L-01',
       };
 
-      // Temporarily hold stock
-      setProducts((prev) =>
-        prev.map((p) => {
-          const inCart = cart.find((c) => c.product.id === p.id);
-          if (inCart) {
-            return { ...p, stock: Math.max(0, p.stock - inCart.quantity) };
-          }
-          return p;
-        })
-      );
+      // Refresh product list to show held physical stock
+      fetchProductsAPI().then((p) => {
+        if (p && p.length > 0) setProducts(p);
+      });
 
       setCurrentOrder(newOrder);
       setIsCartModalOpen(false);
+      setCart([]);
+      clearCartAPI();
       navigate('/payment');
 
-      // Trigger toasts
-      addToast('success', 'Order placed successfully!');
+      addToast('success', `Order #${newOrder.orderNumber} placed! Locker ${newOrder.lockerNumber} reserved.`);
       setTimeout(() => {
-        addToast('info', 'Waiting for payment...');
+        addToast('info', 'Waiting for payment confirmation...');
       }, 700);
-    } catch (err) {
-      addToast('error', 'Failed to place order. Please try again.');
+    } catch (err: any) {
+      addToast('error', err.message || 'Failed to place order. Please try again.');
     } finally {
       setIsPlacingOrder(false);
     }
   };
 
-  // Payment simulated success
-  const handlePaymentSuccess = () => {
+  // Payment Confirmation
+  const handlePaymentSuccess = async () => {
     if (!currentOrder) return;
 
+    await confirmOrderPaymentAPI(currentOrder.id);
     setCurrentOrder((prev) => (prev ? { ...prev, status: 'paid' } : null));
+
+    // Refresh user profile if balance or order count changed
+    fetchCustomerProfileAPI().then((prof) => {
+      if (prof) setCurrentUser(prof);
+    });
+
     navigate('/success');
-    addToast('success', 'Payment successful! Locker L-07 is ready.');
+    addToast('success', `Payment successful! Compartment ${currentOrder.lockerNumber || 'L-01'} is ready.`);
   };
 
-  // Payment expired / stock released
+  // Payment expired / stock released (handled via cron job & UI state)
   const handleOrderExpired = () => {
     if (currentOrder) {
-      // Release held stock
-      setProducts((prev) =>
-        prev.map((p) => {
-          const heldItem = currentOrder.items.find(
-            (item) => item.product.id === p.id
-          );
-          if (heldItem) {
-            return { ...p, stock: p.stock + heldItem.quantity };
-          }
-          return p;
-        })
-      );
+      // Refresh products from backend DB where stock revert cron restored units
+      fetchProductsAPI().then((p) => {
+        if (p && p.length > 0) setProducts(p);
+      });
 
-      addToast('error', 'Order expired. Held stock has been released.');
+      addToast('error', 'Payment timer expired. Locker & stock hold released.');
       navigate('/');
       setCurrentOrder(null);
     }
@@ -323,30 +421,22 @@ export default function App() {
   // Order cancellation
   const handleConfirmCancelOrder = () => {
     if (currentOrder) {
-      // Release held stock
-      setProducts((prev) =>
-        prev.map((p) => {
-          const heldItem = currentOrder.items.find(
-            (item) => item.product.id === p.id
-          );
-          if (heldItem) {
-            return { ...p, stock: p.stock + heldItem.quantity };
-          }
-          return p;
-        })
-      );
+      fetchProductsAPI().then((p) => {
+        if (p && p.length > 0) setProducts(p);
+      });
 
-      addToast('info', 'Order cancelled. Held stock has been released.');
+      addToast('info', 'Order cancelled.');
       navigate('/');
       setCurrentOrder(null);
     }
   };
 
-  // Claim order & unlock locker
+  // Claim order & unlock locker in DB
   const handleClaimPickup = async () => {
     if (!currentOrder) return;
     await claimPickupAPI(currentOrder.id);
     setCurrentOrder((prev) => (prev ? { ...prev, status: 'claimed' } : null));
+    addToast('success', `Locker ${currentOrder.lockerNumber} unlocked. Pickup complete!`);
   };
 
   const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -355,7 +445,9 @@ export default function App() {
     0
   );
 
-  const wishlistedProducts = products.filter((p) => wishlistIds.includes(p.id));
+  const wishlistedProducts = useMemo(() => {
+    return products.filter((p) => wishlistIds.includes(p.id));
+  }, [products, wishlistIds]);
 
   // If visiting Admin Portal (/admin or /admin/*), render dedicated AdminLayout
   if (location.pathname.startsWith('/admin')) {
@@ -392,8 +484,9 @@ export default function App() {
             path="/"
             element={
               <div className="space-y-6">
-                {/* Search & Filter Bar + Categories */}
+                {/* Search & Filter Bar + Dynamic Active Categories from Database */}
                 <CategoryTabs
+                  categories={categories}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
                   searchQuery={searchQuery}
@@ -418,7 +511,7 @@ export default function App() {
                       Popular Snacks & Combos
                     </h3>
                     <p className="text-xs text-stone-400 font-medium">
-                      Instant smart locker self-pickup (Showing top {homeProducts.length} items)
+                      Instant smart locker self-pickup (Showing {homeProducts.length} items)
                     </p>
                   </div>
 
@@ -427,35 +520,42 @@ export default function App() {
                     onClick={() => navigate('/view-all')}
                     className="text-xs font-black text-primary hover:text-red-700 cursor-pointer flex items-center gap-1 active:scale-95 transition-all"
                   >
-                    <span>View All</span>
+                    <span>View All ({products.length})</span>
                     <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
                   </button>
                 </div>
 
-                {/* Product Grid: Top 8 items on Home screen */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5">
-                  {homeProducts.map((product) => {
-                    const cartItem = cart.find(
-                      (item) => item.product.id === product.id
-                    );
-                    const isWishlisted = wishlistIds.includes(product.id);
-                    return (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        quantityInCart={cartItem ? cartItem.quantity : 0}
-                        isWishlisted={isWishlisted}
-                        onAddToCart={handleAddToCart}
-                        onUpdateQuantity={handleUpdateQuantity}
-                        onToggleWishlist={handleToggleWishlist}
-                        onSelectProduct={handleOpenProductDetails}
-                      />
-                    );
-                  })}
-                </div>
+                {/* Product Grid: Top items on Home screen */}
+                {isLoadingInitial ? (
+                  <div className="py-16 flex flex-col items-center justify-center gap-3 text-stone-400">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm font-bold">Loading dispenser catalog...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5">
+                    {homeProducts.map((product) => {
+                      const cartItem = cart.find(
+                        (item) => item.product.id === product.id
+                      );
+                      const isWishlisted = wishlistIds.includes(product.id);
+                      return (
+                        <ProductCard
+                          key={product.id}
+                          product={product}
+                          quantityInCart={cartItem ? cartItem.quantity : 0}
+                          isWishlisted={isWishlisted}
+                          onAddToCart={handleAddToCart}
+                          onUpdateQuantity={handleUpdateQuantity}
+                          onToggleWishlist={handleToggleWishlist}
+                          onSelectProduct={handleOpenProductDetails}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
 
-                {filteredProducts.length === 0 && (
-                  <div className="bg-white rounded-3xl p-10 text-center border border-[#EFE8DE] shadow-sm">
+                {!isLoadingInitial && filteredProducts.length === 0 && (
+                  <div className="bg-white rounded-3xl p-10 text-center border border-[#EFE8DE] shadow-xs">
                     <p className="text-stone-500 font-medium">
                       No snacks found matching "{searchQuery}"
                     </p>
@@ -464,7 +564,7 @@ export default function App() {
                         setSearchQuery('');
                         setSelectedCategory('All');
                       }}
-                      className="mt-3 px-4 py-2 text-xs font-bold text-primary bg-red-50 rounded-xl hover:bg-red-100 transition-colors"
+                      className="mt-3 px-4 py-2 text-xs font-bold text-primary bg-red-50 rounded-xl hover:bg-red-100 transition-colors cursor-pointer"
                     >
                       Reset Filters
                     </button>
@@ -480,6 +580,7 @@ export default function App() {
             element={
               <ViewAllScreen
                 products={products}
+                categories={categories}
                 cart={cart}
                 wishlistIds={wishlistIds}
                 onBackToHome={() => navigate('/')}
@@ -572,7 +673,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Product Details Modal (Requirement 1: popup showing full product details on card click) */}
+      {/* Product Details Modal */}
       <ProductDetailsModal
         product={selectedProductForModal}
         isOpen={isProductDetailsOpen}
@@ -589,7 +690,7 @@ export default function App() {
         onToggleWishlist={handleToggleWishlist}
       />
 
-      {/* Customer Login & Register Modal (Requirement 3) */}
+      {/* Customer Login & Register Modal */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}

@@ -29,12 +29,11 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // Find orders for this customer
+  // Find orders for this customer strictly from real order data
   const userOrders = orders.filter(
     (o) =>
       o.customerId === currentUser.id ||
-      (currentUser.name === 'Alex Johnson' && o.orderNumber === 'ORD1234') ||
-      (currentUser.name === 'Priya Sharma' && o.orderNumber === 'ORD1233')
+      (currentUser.customerId && o.customerId === currentUser.customerId)
   );
 
   const isGold = currentUser.membershipTier?.includes('Gold');
