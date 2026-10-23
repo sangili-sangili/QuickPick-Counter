@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Layers,
@@ -34,6 +35,25 @@ import { ToastContainer } from '../common/Toast';
 
 export type AdminTab = 'dashboard' | 'categories' | 'products' | 'orders' | 'lockers' | 'settings';
 
+const VALID_ADMIN_TABS: AdminTab[] = ['dashboard', 'categories', 'products', 'orders', 'lockers', 'settings'];
+
+const getTabFromLocation = (pathname: string): AdminTab => {
+  const parts = pathname.split('/').filter(Boolean);
+  // e.g. /admin/products -> parts is ['admin', 'products']
+  if (parts.length >= 2 && parts[0] === 'admin') {
+    const subRoute = parts[1].toLowerCase() as AdminTab;
+    if (VALID_ADMIN_TABS.includes(subRoute)) {
+      return subRoute;
+    }
+  }
+  // Check sessionStorage fallback if landed on /admin
+  const savedTab = sessionStorage.getItem('quickpick_admin_active_tab') as AdminTab | null;
+  if (savedTab && VALID_ADMIN_TABS.includes(savedTab)) {
+    return savedTab;
+  }
+  return 'dashboard';
+};
+
 interface AdminLayoutProps {
   products: Product[];
   onUpdateProducts: (products: Product[]) => void;
@@ -45,6 +65,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onUpdateProducts,
   onGoToCustomerKiosk,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return sessionStorage.getItem('quickpick_admin_auth') === 'true';
@@ -57,7 +80,26 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     avatar: 'A',
   });
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  // Derive activeTab directly from current URL path, remembering on reload
+  const [activeTab, setActiveTab] = useState<AdminTab>(() => getTabFromLocation(location.pathname));
+
+  // Keep activeTab in sync with browser location and normalize /admin -> /admin/${tab}
+  useEffect(() => {
+    const resolvedTab = getTabFromLocation(location.pathname);
+    setActiveTab(resolvedTab);
+    sessionStorage.setItem('quickpick_admin_active_tab', resolvedTab);
+
+    if (location.pathname === '/admin' || location.pathname === '/admin/') {
+      navigate(`/admin/${resolvedTab}`, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  const handleTabChange = (tab: AdminTab) => {
+    setActiveTab(tab);
+    sessionStorage.setItem('quickpick_admin_active_tab', tab);
+    navigate(`/admin/${tab}`);
+  };
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Notifications dropdown state
@@ -378,7 +420,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 key={item.key}
                 type="button"
-                onClick={() => setActiveTab(item.key)}
+                onClick={() => handleTabChange(item.key)}
                 className={`w-full px-4 py-3 rounded-2xl text-xs font-bold flex items-center gap-3 transition-all cursor-pointer ${
                   isActive
                     ? 'bg-[#636B2F] text-white shadow-md shadow-black/30 translate-x-1'
@@ -596,7 +638,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setActiveTab('settings');
+                        handleTabChange('settings');
                         setIsProfileDropdownOpen(false);
                       }}
                       className="w-full px-3 py-2 rounded-xl text-xs font-bold text-[#3D4127] hover:bg-[#F8F9F3] flex items-center gap-2.5 cursor-pointer text-left transition-colors"
@@ -643,7 +685,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 products={products}
                 lockers={lockers}
                 onViewOrder={(order) => setSelectedOrderForModal(order)}
-                onNavigateTab={(tab) => setActiveTab(tab)}
+                onNavigateTab={(tab) => handleTabChange(tab)}
                 onSimulateNewOrder={handleSimulateNewOrder}
               />
             )}
@@ -736,7 +778,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     key={item.key}
                     type="button"
                     onClick={() => {
-                      setActiveTab(item.key);
+                      handleTabChange(item.key);
                       setIsMobileSidebarOpen(false);
                     }}
                     className={`w-full px-4 py-3 rounded-2xl text-xs font-bold flex items-center gap-3 transition-all ${
