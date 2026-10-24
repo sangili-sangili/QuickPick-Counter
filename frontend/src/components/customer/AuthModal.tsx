@@ -117,19 +117,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-[#EFE8DE] transform transition-all animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Top Header */}
-        <div className="px-6 pt-5 pb-3 border-b border-[#EFE8DE] flex items-center justify-between shrink-0 bg-white">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary to-amber-500 flex items-center justify-center text-white shadow-xs">
-              <span className="text-base">🍿</span>
+        <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b border-[#EFE8DE] flex items-center justify-between shrink-0 bg-white">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-primary to-amber-500 flex items-center justify-center text-white shadow-xs shrink-0">
+              <span className="text-sm sm:text-base">🍿</span>
             </div>
             <div>
-              <h3 className="text-base font-black text-stone-900 tracking-tight leading-none">
+              <h3 className="text-sm sm:text-base font-black text-stone-900 tracking-tight leading-none">
                 Snack<span className="text-primary">Hub</span> Account
               </h3>
-              <p className="text-[11px] text-stone-400 font-medium mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-stone-400 font-medium mt-0.5">
                 Kiosk Express Access & Order History
               </p>
             </div>
@@ -137,7 +137,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl border border-[#EFE8DE] text-stone-400 hover:text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer"
+            className="p-1 sm:p-1.5 rounded-xl border border-[#EFE8DE] text-stone-400 hover:text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-4 h-4" />
@@ -145,7 +145,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </div>
 
         {/* Tab Toggle Switcher */}
-        <div className="px-6 pt-4 pb-1 shrink-0 bg-white">
+        <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-1 shrink-0 bg-white">
           <div className="p-1 rounded-2xl bg-[#FAF5EF] border border-[#EFE8DE] grid grid-cols-2 gap-1 text-xs font-bold">
             <button
               type="button"
@@ -180,13 +180,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Error notification banner if any */}
         {errorMessage && (
-          <div className="mx-6 mt-3 px-3.5 py-2.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 font-medium">
+          <div className="mx-4 sm:mx-6 mt-3 px-3.5 py-2 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600 font-medium">
             {errorMessage}
           </div>
         )}
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3.5 sm:space-y-4 scrollbar-thin">
           {activeTab === 'signin' ? (
             /* Sign In Form */
             <form onSubmit={handleSignInSubmit} className="space-y-3.5">

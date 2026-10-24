@@ -16,7 +16,7 @@ export const Footer: React.FC<FooterProps> = ({
 }) => {
   return (
     <footer className="mt-12 bg-white border-t border-[#EFE8DE] text-stone-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Col 1: Brand Info */}
           <div className="md:col-span-5 space-y-3.5">
@@ -36,7 +36,7 @@ export const Footer: React.FC<FooterProps> = ({
               Your instant self-service snack counter. Pick your favorite munchies, pay in seconds with UPI QR, and collect from an automated smart locker.
             </p>
 
-            <div className="flex items-center gap-4 text-xs font-semibold text-stone-500 pt-1">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-semibold text-stone-500 pt-1">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-green-600" />
                 Secure UPI
@@ -112,24 +112,24 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom copyright line */}
         <div className="mt-8 pt-6 border-t border-[#EFE8DE] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-400">
-          <p>© 2026 SnackHub QuickPick Counter. All rights reserved.</p>
-          <div className="flex items-center gap-4 font-medium">
+          <p className="text-center sm:text-left">© 2026 SnackHub QuickPick Counter. All rights reserved.</p>
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-medium">
             <button onClick={onOpenHelp} className="hover:text-stone-600 cursor-pointer">
               Kiosk Guide
             </button>
-            <span>•</span>
             {onGoToAdmin && (
               <>
+                <span>•</span>
                 <button
                   type="button"
                   onClick={onGoToAdmin}
-                  className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-red-50 text-stone-600 hover:text-primary font-bold text-[11px] transition-colors border border-stone-200 cursor-pointer"
+                  className="hover:text-stone-600 cursor-pointer"
                 >
-                  ⚙️ Admin Portal
+                  Admin
                 </button>
-                <span>•</span>
               </>
             )}
+            <span>•</span>
             <span>Privacy</span>
             <span>•</span>
             <span>Terms</span>

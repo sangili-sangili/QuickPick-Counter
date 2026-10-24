@@ -277,70 +277,70 @@ export const AdminCustomers: React.FC<AdminCustomersProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Stat Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Total Customers */}
-        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500 truncate">
               Registered Customers
             </p>
-            <p className="text-2xl font-black text-stone-900 mt-1">{totalCustomers}</p>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-0.5">
+            <p className="text-2xl font-black text-stone-900 mt-1 truncate">{totalCustomers}</p>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-0.5 truncate block">
               +14% this month
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Users className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5" />
           </div>
         </div>
 
         {/* Gold VIP Members */}
-        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500 truncate">
               Gold VIP Members
             </p>
-            <p className="text-2xl font-black text-amber-600 mt-1">{goldCount}</p>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 mt-0.5">
+            <p className="text-2xl font-black text-amber-600 mt-1 truncate">{goldCount}</p>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 mt-0.5 truncate block">
               5% Kiosk Cashback
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-            <Crown className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+            <Crown className="w-5 h-5" />
           </div>
         </div>
 
         {/* Silver Members */}
-        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500 truncate">
               Silver Members
             </p>
-            <p className="text-2xl font-black text-slate-700 mt-1">{silverCount}</p>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 mt-0.5">
+            <p className="text-2xl font-black text-slate-700 mt-1 truncate">{silverCount}</p>
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 mt-0.5 truncate block">
               Tier progress active
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-            <Sparkles className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5" />
           </div>
         </div>
 
         {/* Avg. Customer Lifetime Value */}
-        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+        <div className="p-4 rounded-2xl bg-white border border-[#D8C2A7] shadow-xs flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1 pr-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500 truncate">
               Avg. Lifetime Value
             </p>
-            <p className="text-2xl font-black text-stone-900 mt-1">
+            <p className="text-xl sm:text-2xl font-black text-stone-900 mt-1 truncate">
               {formatRupees(avgSpentPaise)}
             </p>
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-0.5">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 mt-0.5 truncate block">
               Across all checkouts
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-            <DollarSign className="w-6 h-6" />
+          <div className="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+            <DollarSign className="w-5 h-5" />
           </div>
         </div>
       </div>

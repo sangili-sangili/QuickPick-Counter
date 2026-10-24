@@ -84,12 +84,12 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
     <div className="space-y-6 select-none">
       {/* Top Header & Emergency Override */}
       <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#E3E6D3] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-black text-[#3D4127] tracking-tight">
               Smart Lockers Controller
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#F0F2E5] text-[#636B2F] border border-[#BAC095]/40 flex items-center gap-1">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#F0F2E5] text-[#636B2F] border border-[#BAC095]/40 flex items-center gap-1 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-[#636B2F] animate-pulse" />
               12 Online
             </span>
@@ -100,11 +100,11 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
         </div>
 
         {/* Top Action Buttons: Export & Emergency Override */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
           <button
             type="button"
             onClick={handleExportLockers}
-            className="px-3.5 py-2 rounded-xl bg-white border border-[#BAC095]/60 hover:bg-[#F8F9F3] text-[#3D4127] font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            className="px-3.5 py-2 rounded-xl bg-white border border-[#BAC095]/60 hover:bg-[#F8F9F3] text-[#3D4127] font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
             title="Export 12-locker telemetry to CSV"
           >
             <FileSpreadsheet className="w-4 h-4 text-[#636B2F]" />
@@ -116,7 +116,7 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
               onEmergencyUnlockAll();
               if (onToast) onToast('warning', 'Emergency unlock command transmitted to all 12 compartments.');
             }}
-            className="px-4 py-2 rounded-xl bg-[#3D4127] hover:bg-[#2A2D19] text-[#D4DE95] border border-[#636B2F] font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+            className="px-4 py-2 rounded-xl bg-[#3D4127] hover:bg-[#2A2D19] text-[#D4DE95] border border-[#636B2F] font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
             title="Solenoid override for all 12 compartments"
           >
             <ShieldAlert className="w-4 h-4 text-[#D4DE95]" />
@@ -126,7 +126,7 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
       </div>
 
       {/* 4 Status Overview Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3.5 sm:gap-4">
         {/* Available */}
         <div
           onClick={() => setStatusFilter(statusFilter === 'available' ? 'all' : 'available')}
@@ -267,7 +267,7 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {filteredLockers.map((locker) => {
             const visualState = locker.status;
             const isUnlocked = locker.doorState === 'unlocked' || locker.doorState === 'open';
@@ -298,21 +298,21 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
             return (
               <div
                 key={locker.id}
-                className={`rounded-3xl p-5 border transition-all duration-200 flex flex-col justify-between group ${cardBg} ${borderColor}`}
+                className={`rounded-3xl p-4 sm:p-5 border transition-all duration-200 flex flex-col justify-between group ${cardBg} ${borderColor}`}
               >
                 <div>
                   {/* Top Header: Locker Name, State Badge, Temp */}
-                  <div className="flex items-center justify-between pb-3 border-b border-[#E3E6D3]/70">
-                    <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-xl bg-[#F0F2E5] border border-[#BAC095]/40 flex items-center justify-center font-black text-xs text-[#3D4127] shadow-xs">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#E3E6D3]/70 gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#F0F2E5] border border-[#BAC095]/40 flex items-center justify-center font-black text-xs text-[#3D4127] shadow-xs shrink-0">
                         {locker.name || locker.number}
                       </div>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${badgeBg}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border truncate ${badgeBg}`}>
                         {stateLabel}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-[#3D4127]/60">
+                    <div className="flex items-center gap-1 text-[11px] font-bold text-[#3D4127]/60 shrink-0">
                       <Thermometer className="w-3.5 h-3.5 text-[#636B2F]" />
                       <span>{locker.temperatureC || 21}°C</span>
                     </div>
@@ -386,11 +386,11 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
                 </div>
 
                 {/* Footer Controls: Solenoid Unlock & Maintenance Actions */}
-                <div className="pt-3 border-t border-[#E3E6D3]/60 flex items-center gap-2">
+                <div className="pt-3 border-t border-[#E3E6D3]/60 flex items-center gap-1.5 sm:gap-2">
                   <button
                     type="button"
                     onClick={() => onToggleUnlock(locker.id)}
-                    className={`flex-1 py-2 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-2xs ${
+                    className={`flex-1 min-w-0 py-2 px-2.5 sm:px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shadow-2xs ${
                       isUnlocked
                         ? 'bg-amber-100 border-amber-300 text-amber-900 font-black'
                         : 'bg-white hover:bg-[#F8F9F3] border-[#BAC095]/60 text-[#3D4127]'
@@ -398,13 +398,13 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
                   >
                     {isUnlocked ? (
                       <>
-                        <Unlock className="w-3.5 h-3.5 text-amber-700" />
-                        <span>Solenoid Open</span>
+                        <Unlock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                        <span className="truncate">Solenoid Open</span>
                       </>
                     ) : (
                       <>
-                        <Lock className="w-3.5 h-3.5 text-[#636B2F]" />
-                        <span>Unlock</span>
+                        <Lock className="w-3.5 h-3.5 text-[#636B2F] shrink-0" />
+                        <span className="truncate">Unlock</span>
                       </>
                     )}
                   </button>
@@ -413,7 +413,7 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
                     <button
                       type="button"
                       onClick={() => onResetLocker(locker.id)}
-                      className="p-2 rounded-xl border border-[#BAC095]/60 bg-white hover:bg-[#F8F9F3] text-[#3D4127] cursor-pointer shadow-2xs active:scale-95"
+                      className="p-2 rounded-xl border border-[#BAC095]/60 bg-white hover:bg-[#F8F9F3] text-[#3D4127] cursor-pointer shadow-2xs active:scale-95 shrink-0"
                       title="Reset / Release Compartment"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -423,7 +423,7 @@ export const AdminLockers: React.FC<AdminLockersProps> = ({
                   <button
                     type="button"
                     onClick={() => onSetMaintenance(locker.id)}
-                    className={`p-2 rounded-xl border transition-all cursor-pointer shadow-2xs active:scale-95 ${
+                    className={`p-2 rounded-xl border transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0 ${
                       visualState === 'out_of_service'
                         ? 'bg-[#636B2F] text-white border-[#636B2F]'
                         : 'border-[#BAC095]/60 bg-white hover:bg-stone-50 text-[#3D4127]'

@@ -57,11 +57,11 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
   const isSilver = currentUser.membershipTier?.includes('Silver');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl max-w-lg w-full border border-[#D8C2A7] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header / Loyalty Card Banner */}
         <div
-          className={`p-6 text-white relative overflow-hidden ${
+          className={`p-4 sm:p-6 text-white relative overflow-hidden ${
             isGold
               ? 'bg-gradient-to-tr from-amber-600 via-amber-700 to-amber-900'
               : isSilver
@@ -72,16 +72,16 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
           {/* Subtle Decorative Background circles */}
           <div className="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-xl pointer-events-none" />
 
-          <div className="relative z-10 flex items-start justify-between">
-            <div className="flex items-center gap-3.5">
-              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-xl font-black shadow-inner border border-white/20">
+          <div className="relative z-10 flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white text-lg sm:text-xl font-black shadow-inner border border-white/20 shrink-0">
                 {currentUser.avatar || currentUser.name.charAt(0).toUpperCase()}
               </div>
 
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-black text-white">{currentUser.name}</h3>
-                  <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border border-white/20">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <h3 className="text-base sm:text-lg font-black text-white truncate max-w-[140px] sm:max-w-none">{currentUser.name}</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider flex items-center gap-1 border border-white/20 shrink-0">
                     {isGold ? (
                       <Crown className="w-3 h-3 text-amber-300 fill-amber-300" />
                     ) : isSilver ? (
@@ -94,12 +94,12 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2 text-xs text-white/80 font-medium mt-1">
-                  <span className="flex items-center gap-1">
-                    <Mail className="w-3 h-3" />
-                    {currentUser.email}
+                  <span className="flex items-center gap-1 truncate max-w-[160px] sm:max-w-xs">
+                    <Mail className="w-3 h-3 shrink-0" />
+                    <span className="truncate">{currentUser.email}</span>
                   </span>
                   {currentUser.phone && (
-                    <span>• {currentUser.phone}</span>
+                    <span className="hidden sm:inline">• {currentUser.phone}</span>
                   )}
                 </div>
               </div>
@@ -107,17 +107,17 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
 
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Membership Benefit Bar */}
-          <div className="mt-4 pt-3 border-t border-white/15 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-white/90">
-              <Gift className="w-3.5 h-3.5 text-amber-300" />
-              <span className="font-bold">
+          <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-white/15 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5 text-white/90 min-w-0">
+              <Gift className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+              <span className="font-bold truncate text-[11px] sm:text-xs">
                 {isGold
                   ? 'VIP 5% Instant Cashback Active'
                   : isSilver
@@ -125,19 +125,19 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                   : 'Standard Kiosk Patron Rewards'}
               </span>
             </div>
-            <span className="text-[11px] font-black text-amber-200">
-              {Math.floor((currentUser.totalSpentPaise || 84000) / 1000)} Points
+            <span className="text-[10px] sm:text-[11px] font-black text-amber-200 shrink-0 ml-2">
+              {Math.floor((currentUser.totalSpentPaise || 84000) / 1000)} Pts
             </span>
           </div>
         </div>
 
         {/* Modal Body: Active Dispenser Locks & Order History */}
-        <div className="p-6 overflow-y-auto space-y-5">
+        <div className="p-3.5 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5">
           <div>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-xs font-black uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
                 <ShoppingBag className="w-4 h-4 text-primary" />
-                <span>My Kiosk Orders & Pickup Status</span>
+                <span>My Orders & Pickup Status</span>
               </h4>
               <span className="text-[11px] text-stone-400 font-bold">
                 {displayOrders.length} {displayOrders.length === 1 ? 'Order' : 'Orders'}
@@ -210,8 +210,8 @@ export const CustomerProfileModal: React.FC<CustomerProfileModalProps> = ({
                         </div>
                       )}
 
-                      <div className="mt-2 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                        <span className="truncate max-w-[240px]">
+                      <div className="mt-2 pt-2 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-stone-500">
+                        <span className="truncate max-w-[200px] sm:max-w-[240px]">
                           {Array.isArray(ord.items) && ord.items.length > 0
                             ? ord.items
                                 .map((i: any) => `${i.product?.name || i.productName || 'Snack'} (x${i.quantity})`)

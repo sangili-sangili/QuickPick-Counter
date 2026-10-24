@@ -257,8 +257,8 @@ export function AdminTable<T>({
     <div className="bg-white rounded-3xl border border-[#E3E6D3] shadow-xs overflow-hidden flex flex-col">
       {/* Table Header Section: Title, Search, Filter & Actions */}
       <div className="p-4 sm:p-6 border-b border-[#E3E6D3] bg-[#FCFDF9] flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+          <div className="min-w-0 flex-1">
             {title && (
               <h2 className="text-lg sm:text-xl font-black text-[#3D4127] tracking-tight">
                 {title}
@@ -271,13 +271,13 @@ export function AdminTable<T>({
             )}
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-nowrap">
             {/* Excel Export Button */}
             <button
               type="button"
               onClick={handleExportExcel}
               disabled={isExporting || processedData.length === 0}
-              className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 ${
+              className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0 ${
                 exportComplete
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                   : 'bg-white hover:bg-[#F8F9F3] border-[#BAC095]/60 text-[#3D4127] disabled:opacity-50 disabled:cursor-not-allowed'
@@ -286,19 +286,19 @@ export function AdminTable<T>({
             >
               {exportComplete ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-600" />
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span className="hidden sm:inline">Exported!</span>
                 </>
               ) : (
                 <>
-                  <FileSpreadsheet className={`w-4 h-4 text-[#636B2F] ${isExporting ? 'animate-bounce' : ''}`} />
+                  <FileSpreadsheet className={`w-4 h-4 text-[#636B2F] shrink-0 ${isExporting ? 'animate-bounce' : ''}`} />
                   <span className="hidden sm:inline">Export to Excel</span>
                 </>
               )}
             </button>
 
             {/* Custom Action Button (e.g. Add Category, Add Product) */}
-            {actionButton && <div>{actionButton}</div>}
+            {actionButton && <div className="shrink-0">{actionButton}</div>}
           </div>
         </div>
 

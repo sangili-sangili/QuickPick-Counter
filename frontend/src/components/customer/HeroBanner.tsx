@@ -78,7 +78,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onOrderNow }) => {
     <div
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#7F1D1D] via-[#991B1B] to-[#B91C1C] text-white p-6 sm:p-8 lg:p-9 shadow-lg group/carousel"
+      className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-[#7F1D1D] via-[#991B1B] to-[#B91C1C] text-white p-4 sm:p-8 lg:p-9 shadow-lg group/carousel w-full min-w-0"
     >
       {/* Ambient background glow */}
       <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-red-500/20 blur-3xl pointer-events-none" />
@@ -105,12 +105,12 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ onOrderNow }) => {
       <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center min-h-[220px]">
         {/* Left text column */}
         <div className="md:col-span-7 lg:col-span-8 space-y-3.5 transition-all duration-300">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-[10px] sm:text-[11px] font-bold uppercase tracking-wider">
             {currentSlide.badgeIcon}
             <span>{currentSlide.badge}</span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight">
+          <h2 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight leading-tight">
             {currentSlide.title} <br className="hidden sm:inline" />
             <span className="text-amber-400">{currentSlide.highlightText}</span>
           </h2>

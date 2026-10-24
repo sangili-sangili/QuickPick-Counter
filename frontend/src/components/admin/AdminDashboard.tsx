@@ -218,7 +218,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {/* Card 1: Total Products */}
           <div
             onClick={() => onNavigateTab('products')}
@@ -438,11 +438,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 <IndianRupee className="w-4 h-4" />
               </div>
             </div>
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-black text-[#3D4127] tracking-tight">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-[#3D4127] tracking-tight truncate">
                 {formatRupees(totalRevenuePaise)}
               </span>
-              <span className="text-[11px] font-black text-[#636B2F] bg-[#D4DE95]/60 px-2 py-0.5 rounded-lg">
+              <span className="text-[11px] font-black text-[#636B2F] bg-[#D4DE95]/60 px-2 py-0.5 rounded-lg shrink-0">
                 +14.2%
               </span>
             </div>

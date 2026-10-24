@@ -72,53 +72,53 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 sm:py-8 space-y-6">
+    <div className="max-w-2xl mx-auto px-2.5 sm:px-4 py-3 sm:py-8 space-y-4 sm:space-y-6 w-full min-w-0">
       {/* 4-Step Progress Stepper */}
-      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100 shadow-soft">
-        <div className="grid grid-cols-4 items-center text-center relative">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-6 border border-slate-100 shadow-soft">
+        <div className="grid grid-cols-4 items-center text-center relative gap-1">
           {/* Connector line */}
-          <div className="absolute top-4 left-[12%] right-[12%] h-0.5 bg-slate-200 -z-0" />
+          <div className="absolute top-3 sm:top-4 left-[10%] right-[10%] h-0.5 bg-slate-200 -z-0" />
           <div
-            className="absolute top-4 left-[12%] h-0.5 bg-primary -z-0 transition-all duration-500"
-            style={{ width: '38%' }}
+            className="absolute top-3 sm:top-4 left-[10%] h-0.5 bg-primary -z-0 transition-all duration-500"
+            style={{ width: '40%' }}
           />
 
           {/* Step 1: Order Placed */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shadow-sm">
-              <Check className="w-4 h-4" />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-sm">
+              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <span className="text-xs font-semibold text-slate-800 mt-2">Order Placed</span>
+            <span className="text-[9px] sm:text-xs font-semibold text-slate-800 mt-1 sm:mt-2 leading-tight">Order Placed</span>
           </div>
 
           {/* Step 2: Make Payment (Active) */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shadow-sm ring-4 ring-red-100 animate-pulse">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-sm ring-2 sm:ring-4 ring-red-100 animate-pulse">
               2
             </div>
-            <span className="text-xs font-bold text-primary mt-2">Make Payment</span>
+            <span className="text-[9px] sm:text-xs font-bold text-primary mt-1 sm:mt-2 leading-tight">Payment</span>
           </div>
 
           {/* Step 3: Processing */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-white border-2 border-slate-200 text-slate-400 flex items-center justify-center font-bold text-xs">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white border-2 border-slate-200 text-slate-400 flex items-center justify-center font-bold text-[10px] sm:text-xs">
               3
             </div>
-            <span className="text-xs font-medium text-slate-400 mt-2">Processing</span>
+            <span className="text-[9px] sm:text-xs font-medium text-slate-400 mt-1 sm:mt-2 leading-tight">Processing</span>
           </div>
 
           {/* Step 4: Pickup */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="w-8 h-8 rounded-full bg-white border-2 border-slate-200 text-slate-400 flex items-center justify-center font-bold text-xs">
+            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white border-2 border-slate-200 text-slate-400 flex items-center justify-center font-bold text-[10px] sm:text-xs">
               4
             </div>
-            <span className="text-xs font-medium text-slate-400 mt-2">Pickup</span>
+            <span className="text-[9px] sm:text-xs font-medium text-slate-400 mt-1 sm:mt-2 leading-tight">Pickup</span>
           </div>
         </div>
       </div>
 
       {/* Main Payment Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-soft text-center space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-slate-100 shadow-soft text-center space-y-4 sm:space-y-6 w-full min-w-0">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
             Scan & Pay with UPI
@@ -143,10 +143,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
         {/* QR Code Container */}
         <div className="flex flex-col items-center justify-center">
-          <div className="p-4 bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-sm relative group">
+          <div className="p-3 sm:p-4 bg-white rounded-2xl sm:rounded-3xl border-2 border-dashed border-slate-200 shadow-sm relative group">
             {/* SVG generated UPI QR Code */}
             <svg
-              className="w-48 h-48 sm:w-56 sm:h-56"
+              className="w-40 h-40 sm:w-56 sm:h-56"
               viewBox="0 0 200 200"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -220,7 +220,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </div>
 
           {/* Supported UPI Apps Badges */}
-          <div className="mt-2 flex items-center gap-2 text-[11px] font-semibold text-slate-500">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] font-semibold text-slate-500">
             <span className="px-2 py-0.5 rounded-md bg-slate-100">GPay</span>
             <span className="px-2 py-0.5 rounded-md bg-slate-100">PhonePe</span>
             <span className="px-2 py-0.5 rounded-md bg-slate-100">Paytm</span>
@@ -286,26 +286,26 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
         </div>
       </div>
 
-      {/* Developer / Testing Simulator Banner (Fixed Overlapping Issue per Requirement 4) */}
-      <div className="w-full max-w-xl mx-auto bg-stone-900 text-white rounded-2xl p-3.5 sm:p-4 shadow-xl border border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs box-border">
-        <div className="flex items-center gap-2.5 self-start sm:self-center">
-          <Zap className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+      {/* Developer / Testing Simulator Banner */}
+      <div className="w-full max-w-xl mx-auto bg-stone-900 text-white rounded-2xl p-3 sm:p-4 shadow-xl border border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-xs box-border">
+        <div className="flex items-center gap-2 self-start sm:self-center">
+          <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
           <div className="leading-tight">
             <span className="font-bold text-stone-200">Test Simulator: </span>
-            <span className="text-stone-400 text-[11px] hidden sm:inline">Quick test actions</span>
+            <span className="text-stone-400 text-[10px] sm:text-[11px]">Quick actions</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0 justify-end">
+        <div className="grid grid-cols-2 gap-2 w-full sm:w-auto shrink-0">
           <button
             onClick={onSimulateSuccess}
-            className="flex-1 sm:flex-none whitespace-nowrap px-3.5 py-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm active:scale-95 transition-all text-xs text-center"
+            className="w-full sm:w-auto px-3 py-2 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm active:scale-95 transition-all text-[11px] sm:text-xs text-center cursor-pointer"
           >
             ✓ Simulate Paid
           </button>
           <button
             onClick={onSimulateExpire}
-            className="flex-1 sm:flex-none whitespace-nowrap px-3.5 py-2 rounded-xl font-bold bg-stone-800 hover:bg-red-950/60 text-stone-200 hover:text-red-300 transition-all border border-stone-700 hover:border-red-800 active:scale-95 text-xs text-center"
+            className="w-full sm:w-auto px-3 py-2 rounded-xl font-bold bg-stone-800 hover:bg-red-950/60 text-stone-200 hover:text-red-300 transition-all border border-stone-700 hover:border-red-800 active:scale-95 text-[11px] sm:text-xs text-center cursor-pointer"
           >
             ✕ Simulate Expire
           </button>

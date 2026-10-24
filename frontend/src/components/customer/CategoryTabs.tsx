@@ -131,12 +131,12 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
     <div className="space-y-4">
       {/* Full-width Search Bar with Centered Icon & Debouncing */}
       <div ref={searchContainerRef} className="relative w-full z-30">
-        <div className="flex items-center w-full bg-white border border-[#EFE8DE] rounded-2xl shadow-xs focus-within:ring-2 focus-within:ring-primary/25 focus-within:border-primary transition-all px-4 py-3 sm:py-3.5">
-          <div className="flex items-center justify-center shrink-0 mr-3 text-stone-400">
+        <div className="flex items-center w-full bg-white border border-[#EFE8DE] rounded-2xl shadow-xs focus-within:ring-2 focus-within:ring-primary/25 focus-within:border-primary transition-all px-3 sm:px-4 py-2.5 sm:py-3.5">
+          <div className="flex items-center justify-center shrink-0 mr-2.5 sm:mr-3 text-stone-400">
             {isSearching ? (
-              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-primary" />
             ) : (
-              <Search className="w-5 h-5" />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
           </div>
 
@@ -145,8 +145,8 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
             value={searchQuery}
             onFocus={() => setIsSearchFocused(true)}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search for your favorite snacks, drinks & combos..."
-            className="w-full bg-transparent text-sm focus:outline-none text-stone-800 placeholder:text-stone-400 leading-normal"
+            placeholder="Search snacks, drinks & combos..."
+            className="w-full bg-transparent text-xs sm:text-sm focus:outline-none text-stone-800 placeholder:text-stone-400 leading-normal min-w-0"
           />
 
           {searchQuery && (
@@ -156,17 +156,17 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
                 setLiveSearchResults([]);
                 setIsSearchFocused(true);
               }}
-              className="p-1.5 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors shrink-0 ml-2 cursor-pointer"
+              className="p-1 sm:p-1.5 rounded-full text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors shrink-0 ml-1.5 sm:ml-2 cursor-pointer"
               title="Clear search"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           )}
         </div>
 
         {/* Search Suggestions Modal */}
         {isSearchFocused && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-3xl border border-[#EFE8DE] shadow-2xl p-4 sm:p-5 z-40 max-h-[380px] overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-3xl border border-[#EFE8DE] shadow-2xl p-3 sm:p-5 z-40 max-h-[380px] overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="overflow-y-auto pr-3 mr-[-4px] space-y-4">
               {searchQuery.trim().length === 0 ? (
                 /* State 1: Popular & Trending Searches */
@@ -346,7 +346,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
           onMouseUp={handleMouseUpOrLeave}
           onMouseLeave={handleMouseUpOrLeave}
           onWheel={handleWheel}
-          className={`flex items-center gap-4 sm:gap-6 overflow-x-auto py-3 px-3 scrollbar-none select-none ${
+          className={`flex items-center gap-3 sm:gap-6 overflow-x-auto py-2.5 px-1 sm:px-3 scrollbar-none select-none ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
         >
@@ -356,10 +356,10 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
               <button
                 key={item.id}
                 onClick={() => onSelectCategory(item.name)}
-                className="flex flex-col items-center gap-2 group/cat cursor-pointer focus:outline-none shrink-0"
+                className="flex flex-col items-center gap-1.5 sm:gap-2 group/cat cursor-pointer focus:outline-none shrink-0"
               >
                 <div
-                  className={`relative w-16 h-16 sm:w-18 sm:h-18 rounded-full p-1 transition-all duration-200 flex items-center justify-center ${
+                  className={`relative w-14 h-14 sm:w-18 sm:h-18 rounded-full p-1 transition-all duration-200 flex items-center justify-center ${
                     isSelected
                       ? 'ring-3 ring-primary ring-offset-2 ring-offset-[#FAF5EF] bg-red-50 shadow-md'
                       : 'bg-white border border-[#EFE8DE] group-hover/cat:border-orange-200 shadow-xs'

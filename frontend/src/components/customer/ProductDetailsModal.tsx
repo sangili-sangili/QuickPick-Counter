@@ -54,19 +54,19 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-200">
       {/* Outer Card: overflow-hidden ensures border-radius is never clipped by a scrollbar */}
       <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-[#EFE8DE] transform transition-all animate-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col overflow-hidden">
         {/* Top Header Actions (Fixed) */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#EFE8DE] bg-white shrink-0">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FAF5EF] text-stone-700 border border-[#EFE8DE]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#EFE8DE] bg-white shrink-0">
+          <span className="px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-[#FAF5EF] text-stone-700 border border-[#EFE8DE]">
             {product.category}
           </span>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => onToggleWishlist(product.id)}
-              className={`p-2 rounded-xl border border-[#EFE8DE] transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-xl border border-[#EFE8DE] transition-colors ${
                 isWishlisted
                   ? 'text-primary bg-red-50'
                   : 'text-stone-400 hover:text-stone-700 bg-white'
@@ -82,7 +82,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl border border-[#EFE8DE] text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-xl border border-[#EFE8DE] text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -90,9 +90,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         </div>
 
         {/* Scrollable Middle Body (Scrollbar strictly inside, never overlaps rounded corners) */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3.5 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-3.5 scrollbar-thin">
           {/* Product Image Area */}
-          <div className="relative w-full h-44 sm:h-52 bg-[#FAF5EF] rounded-2xl flex items-center justify-center p-3 overflow-hidden border border-[#EFE8DE]">
+          <div className="relative w-full h-36 sm:h-52 bg-[#FAF5EF] rounded-2xl flex items-center justify-center p-3 overflow-hidden border border-[#EFE8DE]">
             <img
               src={product.image}
               alt={product.name}
@@ -103,14 +103,14 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
             />
 
             {product.badge && (
-              <span className="absolute top-3 left-3 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider bg-primary text-white shadow-xs">
+              <span className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 px-2 sm:px-3 py-0.5 sm:py-1 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-wider bg-primary text-white shadow-xs">
                 {product.badge}
               </span>
             )}
 
             {isOutOfStock && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-xs flex items-center justify-center">
-                <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-stone-100 text-stone-500 border border-stone-200">
+                <span className="px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-bold bg-stone-100 text-stone-500 border border-stone-200">
                   Out of Stock
                 </span>
               </div>
@@ -119,23 +119,23 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
           {/* Product Title, Rating & Pricing */}
           <div className="space-y-1.5">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight leading-tight">
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
+                <h3 className="text-lg sm:text-2xl font-black text-stone-900 tracking-tight leading-tight truncate">
                   {product.name}
                 </h3>
-                <p className="text-xs sm:text-sm text-stone-500 font-medium">
+                <p className="text-xs sm:text-sm text-stone-500 font-medium truncate">
                   {product.subtitle || 'Crispy & Delicious Snack'}
                 </p>
               </div>
 
               <div className="text-right shrink-0">
-                <div className="flex items-baseline gap-2 justify-end">
-                  <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
+                <div className="flex items-baseline gap-1.5 sm:gap-2 justify-end">
+                  <span className="text-xl sm:text-3xl font-black text-primary tracking-tight">
                     {formatRupees(product.pricePaise, true)}
                   </span>
                   {product.regularPricePaise && product.regularPricePaise > product.pricePaise && (
-                    <span className="text-sm sm:text-base text-stone-400 line-through font-semibold">
+                    <span className="text-xs sm:text-base text-stone-400 line-through font-semibold">
                       {formatRupees(product.regularPricePaise, true)}
                     </span>
                   )}
@@ -208,35 +208,35 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         </div>
 
         {/* Fixed Footer Actions: Quantity Stepper & Add to Cart (Always visible at bottom!) */}
-        <div className="shrink-0 px-6 py-3.5 sm:py-4 border-t border-[#EFE8DE] bg-white flex items-center gap-3.5">
+        <div className="shrink-0 px-3 sm:px-6 py-2.5 sm:py-4 border-t border-[#EFE8DE] bg-white flex items-center gap-2 sm:gap-3.5">
           {/* Stepper */}
-          <div className="flex items-center gap-2 bg-[#FAF5EF] rounded-2xl p-1.5 border border-[#EFE8DE] shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 bg-[#FAF5EF] rounded-2xl p-1 sm:p-1.5 border border-[#EFE8DE] shrink-0">
             <button
               onClick={handleDecrease}
               disabled={selectedQty <= 1}
-              className={`w-8 h-8 rounded-xl bg-white flex items-center justify-center transition-all ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white flex items-center justify-center transition-all ${
                 selectedQty <= 1
                   ? 'text-stone-300 cursor-not-allowed'
                   : 'text-stone-700 hover:text-primary active:scale-90 shadow-xs'
               }`}
               aria-label="Decrease"
             >
-              <Minus className="w-4 h-4" />
+              <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
-            <span className="w-6 text-center font-black text-sm text-stone-900">
+            <span className="w-5 sm:w-6 text-center font-black text-xs sm:text-sm text-stone-900">
               {selectedQty}
             </span>
             <button
               onClick={handleIncrease}
               disabled={selectedQty >= product.stock}
-              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-all ${
                 selectedQty >= product.stock
                   ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                   : 'bg-primary text-white hover:bg-primary-hover active:scale-90 shadow-xs'
               }`}
               aria-label="Increase"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </div>
 
@@ -244,15 +244,15 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
           <button
             onClick={handleConfirmAdd}
             disabled={isOutOfStock}
-            className={`flex-1 py-3 px-4 rounded-2xl font-black text-sm text-white flex items-center justify-center gap-2 shadow-md transition-all active:scale-98 ${
+            className={`flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-2xl font-black text-xs sm:text-sm text-white flex items-center justify-center gap-1.5 sm:gap-2 shadow-md transition-all active:scale-98 ${
               isOutOfStock
                 ? 'bg-stone-200 text-stone-400 cursor-not-allowed shadow-none'
                 : 'bg-primary hover:bg-primary-hover shadow-red-200'
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
-            <span>
-              {quantityInCart > 0 ? 'Update in Cart' : 'Add to Cart'} • {formatRupees(totalPricePaise, true)}
+            <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="truncate">
+              {quantityInCart > 0 ? 'Update' : 'Add to Cart'} • {formatRupees(totalPricePaise, true)}
             </span>
           </button>
         </div>

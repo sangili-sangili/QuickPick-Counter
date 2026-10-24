@@ -128,8 +128,8 @@ export const ViewAllScreen: React.FC<ViewAllScreenProps> = ({
         </div>
 
         {/* Search Bar - Fixed Flex Centered Input with Zero Overlap */}
-        <div className="flex items-center w-full sm:w-72 bg-white border border-[#EFE8DE] rounded-2xl px-3.5 py-2.5 shadow-xs focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-          <Search className="w-4 h-4 text-stone-400 shrink-0 mr-3" />
+        <div className="flex items-center w-full sm:w-72 bg-white border border-[#EFE8DE] rounded-2xl px-3 sm:px-3.5 py-2 sm:py-2.5 shadow-xs focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+          <Search className="w-4 h-4 text-stone-400 shrink-0 mr-2.5 sm:mr-3" />
           <input
             type="text"
             value={searchQuery}
@@ -138,7 +138,7 @@ export const ViewAllScreen: React.FC<ViewAllScreenProps> = ({
               setCurrentPage(1);
             }}
             placeholder="Search all snacks..."
-            className="w-full bg-transparent text-xs sm:text-sm focus:outline-none text-stone-800 placeholder:text-stone-400 leading-normal"
+            className="w-full bg-transparent text-xs sm:text-sm focus:outline-none text-stone-800 placeholder:text-stone-400 leading-normal min-w-0"
           />
           {searchQuery && (
             <button
@@ -156,7 +156,7 @@ export const ViewAllScreen: React.FC<ViewAllScreenProps> = ({
       </div>
 
       {/* Products Grid (Max 8 products per page with pagination) */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4 lg:gap-5">
         {displayedProducts.map((product) => {
           const cartItem = cart.find((item) => item.product.id === product.id);
           const isWishlisted = wishlistIds.includes(product.id);

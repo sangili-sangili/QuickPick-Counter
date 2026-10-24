@@ -128,33 +128,33 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
   const currentTime = formatTime();
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4 sm:py-8 space-y-6 animate-in fade-in zoom-in-95 duration-300">
+    <div className="max-w-2xl mx-auto px-2.5 sm:px-4 py-3 sm:py-8 space-y-4 sm:space-y-6 animate-in fade-in zoom-in-95 duration-300">
       {/* Top Card: Payment Successful */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#EFE8DE] shadow-soft text-center space-y-6">
+      <div className="bg-white rounded-3xl p-4 sm:p-8 border border-[#EFE8DE] shadow-soft text-center space-y-4 sm:space-y-6">
         {/* Celebration Animated Icon */}
         <div className="flex flex-col items-center justify-center">
-          <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-lg shadow-green-100 ring-8 ring-green-50 animate-bounce">
-            <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 stroke-[2.5]" />
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-lg shadow-green-100 ring-6 sm:ring-8 ring-green-50 animate-bounce">
+            <CheckCircle2 className="w-9 h-9 sm:w-12 sm:h-12 stroke-[2.5]" />
           </div>
 
-          <h2 className="mt-5 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+          <h2 className="mt-4 sm:mt-5 text-xl sm:text-3xl font-black text-stone-900 tracking-tight">
             Payment Successful!
           </h2>
-          <p className="mt-1 text-sm text-stone-500 font-medium">
+          <p className="mt-1 text-xs sm:text-sm text-stone-500 font-medium">
             Your order is confirmed. Order #{order.orderNumber}
           </p>
         </div>
 
         {/* Locker Number Highlight Card */}
-        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-red-50/80 via-amber-50/40 to-red-50/80 border border-red-100/80 flex items-center justify-between">
+        <div className="p-3.5 sm:p-6 rounded-3xl bg-gradient-to-r from-red-50/80 via-amber-50/40 to-red-50/80 border border-red-100/80 flex items-center justify-between">
           <div className="text-left space-y-1">
-            <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">
+            <span className="text-[11px] sm:text-xs font-semibold text-stone-500 uppercase tracking-wider">
               Locker Number
             </span>
-            <div className="text-3xl sm:text-4xl font-black text-stone-900 tracking-tight">
+            <div className="text-2xl sm:text-4xl font-black text-stone-900 tracking-tight">
               {order.lockerNumber || 'L-07'}
             </div>
-            <p className="text-xs text-primary font-bold flex items-center gap-1">
+            <p className="text-[11px] sm:text-xs text-primary font-bold flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-ping inline-block" />
               Compartment Ready
             </p>
@@ -165,7 +165,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
             <img
               src="/images/locker-kiosk.jpg"
               alt="Locker Kiosk"
-              className="w-20 h-20 sm:w-24 sm:h-24 object-contain rounded-2xl drop-shadow-md border border-white"
+              className="w-16 h-16 sm:w-24 sm:h-24 object-contain rounded-2xl drop-shadow-md border border-white"
             />
           </div>
         </div>
@@ -230,7 +230,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
         <div className="pt-4 border-t border-[#EFE8DE] text-left">
           {!isRatingSubmitted ? (
             <div className="bg-[#FAF5EF]/80 rounded-2xl p-4 sm:p-5 border border-[#EFE8DE] space-y-3.5">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                 <div>
                   <h4 className="text-sm font-black text-stone-900 flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
@@ -240,7 +240,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
                     How was the ordering speed & pickup?
                   </p>
                 </div>
-                <span className="text-xs font-bold text-primary bg-red-50 px-2 py-0.5 rounded-lg">
+                <span className="text-xs font-bold text-primary bg-red-50 px-2 py-0.5 rounded-lg self-start sm:self-auto">
                   {getRatingLabel(activeRatingDisplay)}
                 </span>
               </div>

@@ -565,11 +565,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </button>
 
             {/* Breadcrumb Title */}
-            <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-[#3D4127]/60">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#3D4127]/60 truncate">
                 <span>Admin</span>
-                <span>/</span>
-                <span className="text-[#3D4127] font-black capitalize">
+                <span className="text-[#3D4127]/40">/</span>
+                <span className="text-[#3D4127] font-black capitalize truncate">
                   {activeTab === 'categories' ? 'Category Master' : activeTab}
                 </span>
               </div>
@@ -621,26 +621,31 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
               {/* Notification Dropdown UI */}
               {isNotificationOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl border border-[#E3E6D3] shadow-2xl z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                  <div className="p-4 border-b border-[#E3E6D3] bg-[#FCFDF9] flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-[#3D4127]">System Notifications</span>
+                <>
+                  <div
+                    className="fixed inset-0 z-30 bg-black/20 sm:hidden"
+                    onClick={() => setIsNotificationOpen(false)}
+                  />
+                  <div className="fixed inset-x-2.5 top-16 sm:absolute sm:top-full sm:right-0 sm:inset-x-auto sm:w-96 sm:mt-2 bg-white rounded-3xl border border-[#E3E6D3] shadow-2xl z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+                    <div className="p-4 border-b border-[#E3E6D3] bg-[#FCFDF9] flex items-center justify-between shrink-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-[#3D4127]">System Notifications</span>
+                        {unreadCount > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-black">
+                            {unreadCount} new
+                          </span>
+                        )}
+                      </div>
                       {unreadCount > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-[10px] font-black">
-                          {unreadCount} new
-                        </span>
+                        <button
+                          type="button"
+                          onClick={handleMarkAllNotificationsRead}
+                          className="text-[11px] font-bold text-[#636B2F] hover:underline cursor-pointer"
+                        >
+                          Mark all as read
+                        </button>
                       )}
                     </div>
-                    {unreadCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={handleMarkAllNotificationsRead}
-                        className="text-[11px] font-bold text-[#636B2F] hover:underline cursor-pointer"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
 
                   <div className="divide-y divide-[#E3E6D3]/60 max-h-80 overflow-y-auto">
                     {unreadNotifications.map((notif) => (
@@ -682,7 +687,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     ))}
                   </div>
 
-                  <div className="p-3 border-t border-[#E3E6D3] bg-[#FCFDF9] text-center">
+                  <div className="p-3 border-t border-[#E3E6D3] bg-[#FCFDF9] text-center shrink-0">
                     <button
                       type="button"
                       onClick={() => setIsNotificationOpen(false)}
@@ -692,7 +697,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     </button>
                   </div>
                 </div>
-              )}
+              </>
+            )}
             </div>
 
             {/* Profile Avatar with Dropdown Menu */}
@@ -721,63 +727,69 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
               {/* Profile Dropdown Menu */}
               {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-3xl border border-[#E3E6D3] shadow-2xl z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                  <div className="p-4 border-b border-[#E3E6D3] bg-[#FCFDF9]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-[#636B2F] text-white flex items-center justify-center text-sm font-black shadow-xs">
-                        {adminUser.avatar}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-xs font-black text-[#3D4127] truncate">
-                          {adminUser.name}
+                <>
+                  <div
+                    className="fixed inset-0 z-30 bg-black/20 sm:hidden"
+                    onClick={() => setIsProfileDropdownOpen(false)}
+                  />
+                  <div className="fixed inset-x-3 top-16 sm:absolute sm:top-full sm:right-0 sm:inset-x-auto sm:w-64 sm:mt-2 bg-white rounded-3xl border border-[#E3E6D3] shadow-2xl z-40 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-4 border-b border-[#E3E6D3] bg-[#FCFDF9]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#636B2F] text-white flex items-center justify-center text-sm font-black shadow-xs">
+                          {adminUser.avatar}
                         </div>
-                        <div className="text-[10px] text-[#3D4127]/60 truncate">
-                          {adminUser.email}
+                        <div className="min-w-0">
+                          <div className="text-xs font-black text-[#3D4127] truncate">
+                            {adminUser.name}
+                          </div>
+                          <div className="text-[10px] text-[#3D4127]/60 truncate">
+                            {adminUser.email}
+                          </div>
+                          <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-[#F0F2E5] text-[#636B2F] text-[9px] font-black uppercase">
+                            {adminUser.role}
+                          </span>
                         </div>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-[#F0F2E5] text-[#636B2F] text-[9px] font-black uppercase">
-                          {adminUser.role}
-                        </span>
                       </div>
                     </div>
+
+                    <div className="p-2 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleTabChange('settings');
+                          setIsProfileDropdownOpen(false);
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-bold text-[#3D4127] hover:bg-[#F8F9F3] flex items-center gap-2.5 cursor-pointer text-left transition-colors"
+                      >
+                        <User className="w-4 h-4 text-[#636B2F]" />
+                        <span>Account Settings</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsProfileDropdownOpen(false);
+                          onGoToCustomerKiosk();
+                        }}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-bold text-[#3D4127] hover:bg-[#F8F9F3] flex items-center gap-2.5 cursor-pointer text-left transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4 text-[#636B2F]" />
+                        <span>View Customer Screen</span>
+                      </button>
+
+                      <div className="border-t border-[#E3E6D3]/60 my-1" />
+
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="w-full px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2.5 cursor-pointer text-left transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 text-red-500" />
+                        <span>Log Out of Admin</span>
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="p-2 space-y-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleTabChange('settings');
-                        setIsProfileDropdownOpen(false);
-                      }}
-                      className="w-full px-3 py-2 rounded-xl text-xs font-bold text-[#3D4127] hover:bg-[#F8F9F3] flex items-center gap-2.5 cursor-pointer text-left transition-colors"
-                    >
-                      <User className="w-4 h-4 text-[#636B2F]" />
-                      <span>Account Settings</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileDropdownOpen(false);
-                        onGoToCustomerKiosk();
-                      }}
-                      className="w-full px-3 py-2 rounded-xl text-xs font-bold text-[#3D4127] hover:bg-[#F8F9F3] flex items-center gap-2.5 cursor-pointer text-left transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4 text-[#636B2F]" />
-                      <span>View Customer Screen</span>
-                    </button>
-
-                    <div className="border-t border-[#E3E6D3]/60 my-1" />
-
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2.5 cursor-pointer text-left transition-colors"
-                    >
-                      <LogOut className="w-4 h-4 text-red-500" />
-                      <span>Log Out of Admin</span>
-                    </button>
-                  </div>
-                </div>
+                </>
               )}
             </div>
           </div>

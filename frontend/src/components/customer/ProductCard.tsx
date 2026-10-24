@@ -45,27 +45,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   return (
     <div
       onClick={() => onSelectProduct?.(product)}
-      className="group bg-white rounded-3xl p-3.5 sm:p-4 border border-[#EFE8DE] shadow-sm hover:shadow-card hover:border-orange-200 transition-all duration-300 flex flex-col justify-between cursor-pointer"
+      className="group bg-white rounded-3xl p-3.5 sm:p-4 border border-[#EFE8DE] shadow-soft hover:shadow-card hover:border-orange-200 transition-all duration-300 flex flex-col justify-between cursor-pointer min-w-0"
     >
-      <div>
+      <div className="min-w-0">
         {/* Top Row: Badge & Wishlist Button */}
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between mb-2 gap-1 min-w-0">
           {product.badge ? (
             <span
-              className={`px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider ${badgeColor} shadow-xs`}
+              className={`px-2.5 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider ${badgeColor} shadow-xs`}
             >
               {product.badge}
             </span>
           ) : hasDiscount ? (
-            <span className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
               {discountPct}% OFF
             </span>
           ) : product.stock <= 5 && product.stock > 0 ? (
-            <span className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">
+            <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 border border-amber-200">
               Low Stock
             </span>
           ) : (
-            <span className="text-[10px] font-semibold text-stone-400">
+            <span className="text-[11px] font-semibold text-stone-400">
               Stock: {product.stock}
             </span>
           )}
@@ -90,8 +90,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </button>
         </div>
 
-        {/* Compact Product Image Container */}
-        <div className="relative w-full h-28 sm:h-32 bg-[#FAF5EF]/70 rounded-2xl flex items-center justify-center p-2 mb-2.5 overflow-hidden group-hover:bg-red-50/20 transition-colors">
+        {/* Product Image Container */}
+        <div className="relative w-full h-36 sm:h-32 bg-[#FAF5EF]/70 rounded-2xl flex items-center justify-center p-2 mb-2.5 overflow-hidden group-hover:bg-red-50/20 transition-colors">
           <img
             src={product.image}
             alt={product.name}
@@ -150,10 +150,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       </div>
 
       {/* Bottom Footer: Price & Primary Red Circular '+' Button / Stepper */}
-      <div className="mt-3 pt-1.5 flex items-center justify-between gap-2">
+      <div className="mt-2.5 sm:mt-3 pt-1.5 flex items-center justify-between gap-2">
         <div className="flex flex-col min-w-0">
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-sm sm:text-base font-black text-stone-900 tracking-tight">
+            <span className="text-sm sm:text-base font-black text-stone-900 tracking-tight shrink-0">
               {formatRupees(product.pricePaise, true)}
             </span>
             {hasDiscount && (
@@ -163,7 +163,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             )}
           </div>
           {hasDiscount && (
-            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-tight">
+            <span className="text-[9px] sm:text-[10px] font-black text-emerald-600 uppercase tracking-tight">
               {discountPct}% OFF
             </span>
           )}
@@ -172,7 +172,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {quantityInCart > 0 ? (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 bg-red-50 rounded-full p-1 border border-red-200"
+            className="flex items-center gap-1 bg-red-50 rounded-full p-1 border border-red-200 shrink-0"
           >
             <button
               onClick={() => onUpdateQuantity(product.id, quantityInCart - 1)}
@@ -209,14 +209,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               onAddToCart(product);
             }}
             disabled={isOutOfStock}
-            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm active:scale-90 ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 shadow-sm active:scale-90 shrink-0 ${
               isOutOfStock
                 ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
                 : 'bg-primary hover:bg-primary-hover text-white shadow-red-200 hover:shadow-md'
             }`}
             aria-label="Add to cart"
           >
-            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
           </button>
         )}
       </div>

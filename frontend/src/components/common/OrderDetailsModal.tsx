@@ -19,12 +19,12 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
   if (!isOpen || !order) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#EFE8DE] transform transition-all animate-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between pb-4 border-b border-[#EFE8DE]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-stone-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-[#EFE8DE] transform transition-all animate-in zoom-in-95 duration-200 max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-[#EFE8DE]">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Receipt & Info</span>
-            <h3 className="text-lg font-black text-stone-900">Order #{order.orderNumber}</h3>
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-primary">Receipt & Info</span>
+            <h3 className="text-base sm:text-lg font-black text-stone-900">Order #{order.orderNumber}</h3>
           </div>
           <button
             onClick={onClose}
@@ -35,28 +35,28 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
         </div>
 
         {/* Locker Badge */}
-        <div className="mt-4 p-4 rounded-2xl bg-red-50/70 border border-red-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center">
-              <Box className="w-5 h-5" />
+        <div className="mt-3.5 sm:mt-4 p-3 sm:p-4 rounded-2xl bg-red-50/70 border border-red-100 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
+              <Box className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <p className="text-xs text-stone-500 font-medium">Assigned Locker</p>
-              <p className="text-lg font-black text-primary">{order.lockerNumber || 'L-07'}</p>
+              <p className="text-[11px] sm:text-xs text-stone-500 font-medium">Assigned Locker</p>
+              <p className="text-base sm:text-lg font-black text-primary">{order.lockerNumber || 'L-07'}</p>
             </div>
           </div>
-          <span className="px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700">
+          <span className="px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-bold rounded-full bg-green-100 text-green-700 shrink-0">
             Ready for Pickup
           </span>
         </div>
 
         {/* Items Summary */}
-        <div className="mt-4">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Items Purchased</h4>
-          <div className="space-y-2.5 max-h-40 overflow-y-auto pr-1">
+        <div className="mt-3.5 sm:mt-4">
+          <h4 className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-stone-400 mb-2">Items Purchased</h4>
+          <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
             {order.items.map((item) => (
-              <div key={item.product.id} className="flex items-center justify-between py-1.5 border-b border-stone-50 text-sm">
-                <div className="flex items-center gap-2.5">
+              <div key={item.product.id} className="flex items-center justify-between py-1.5 border-b border-stone-50 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 pr-2">
                   <img
                     src={item.product.image}
                     alt={item.product.name}
