@@ -4,51 +4,83 @@ import { AuthenticatedRequest } from '../types/index.js';
 
 export const getDashboardStats = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // 1. Fetch Products metrics
-    const products = await prisma.product.findMany({
-      orderBy: { physicalStock: 'asc' },
-    });
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const totalProducts = products.length;
-    const activeProducts = products.filter((p) => p.isActive).length;
-    const inactiveProducts = totalProducts - activeProducts;
-    const lowStockProducts = products.filter((p) => p.physicalStock <= 5);
-    const lowStockCount = lowStockProducts.length;
-
-    // 2. Fetch Orders metrics
-    const orders = await prisma.order.findMany({
-      include: {
-        items: {
-          include: { product: true },
+    // Execute database-level aggregations concurrently via connection pool
+    const [
+      totalProducts,
+      activeProducts,
+      lowStockCount,
+      lowStockProducts,
+      totalOrders,
+      paidOrdersCount,
+      pendingOrders,
+      expiredOrders,
+      needsReviewOrders,
+      claimedOrders,
+      revenueAggregate,
+      lockers,
+      recentOrdersRaw,
+      weeklyOrders,
+    ] = await Promise.all([
+      prisma.product.count(),
+      prisma.product.count({ where: { isActive: true } }),
+      prisma.product.count({ where: { physicalStock: { lte: 5 } } }),
+      prisma.product.findMany({
+        where: { physicalStock: { lte: 5 } },
+        select: { id: true, name: true, physicalStock: true, pricePaise: true, image: true },
+        take: 6,
+        orderBy: { physicalStock: 'asc' },
+      }),
+      prisma.order.count(),
+      prisma.order.count({ where: { status: { in: ['PAID', 'CLAIMED'] } } }),
+      prisma.order.count({ where: { status: 'UNPAID' } }),
+      prisma.order.count({ where: { status: 'EXPIRED' } }),
+      prisma.order.count({ where: { status: 'NEEDS_REVIEW' } }),
+      prisma.order.count({ where: { status: 'CLAIMED' } }),
+      prisma.order.aggregate({
+        _sum: { totalPaise: true },
+        where: { status: { in: ['PAID', 'CLAIMED'] } },
+      }),
+      prisma.smartLocker.findMany({
+        select: { id: true, number: true, name: true, status: true, temperatureC: true, doorState: true },
+        orderBy: { number: 'asc' },
+      }),
+      prisma.order.findMany({
+        take: 6,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          orderNumber: true,
+          totalPaise: true,
+          status: true,
+          lockerNumber: true,
+          createdAt: true,
+          customer: { select: { name: true } },
+          items: {
+            select: {
+              quantity: true,
+              product: { select: { name: true } },
+            },
+          },
         },
-        customer: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+      }),
+      prisma.order.findMany({
+        where: { createdAt: { gte: sevenDaysAgo } },
+        select: { createdAt: true, totalPaise: true, status: true },
+      }),
+    ]);
 
-    const totalOrders = orders.length;
-    const paidOrders = orders.filter((o) => o.status === 'PAID' || o.status === 'CLAIMED').length;
-    const pendingOrders = orders.filter((o) => o.status === 'UNPAID').length;
-    const expiredOrders = orders.filter((o) => o.status === 'EXPIRED').length;
-    const needsReviewOrders = orders.filter((o) => o.status === 'NEEDS_REVIEW').length;
-    const claimedOrders = orders.filter((o) => o.status === 'CLAIMED').length;
-
-    const totalRevenuePaise = orders
-      .filter((o) => o.status === 'PAID' || o.status === 'CLAIMED')
-      .reduce((sum, o) => sum + o.totalPaise, 0);
-
-    // 3. Fetch Smart Lockers telemetry
-    const lockers = await prisma.smartLocker.findMany({
-      orderBy: { number: 'asc' },
-    });
+    const inactiveProducts = totalProducts - activeProducts;
+    const totalRevenuePaise = revenueAggregate._sum.totalPaise || 0;
 
     const totalLockers = lockers.length;
     const availableLockersCount = lockers.filter((l) => l.status === 'AVAILABLE').length;
     const inUseLockersCount = lockers.filter((l) => l.status === 'OCCUPIED' || l.status === 'RESERVED').length;
     const maintenanceLockersCount = lockers.filter((l) => l.status === 'OUT_OF_SERVICE').length;
 
-    // 4. Format Recent Orders (top 6)
-    const recentOrders = orders.slice(0, 6).map((o) => ({
+    // Format Recent Orders
+    const recentOrders = recentOrdersRaw.map((o) => ({
       id: o.id,
       orderNumber: o.orderNumber,
       totalPaise: o.totalPaise,
@@ -61,7 +93,7 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
       itemsSummary: o.items.map((i) => `${i.product.name} (x${i.quantity})`).join(', '),
     }));
 
-    // 5. Dynamic Weekly Analytics from real orders in database
+    // Weekly Analytics from bounded 7-day query
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -75,7 +107,7 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
       Sun: { revenue: 0, orders: 0 },
     };
 
-    orders.forEach((o) => {
+    weeklyOrders.forEach((o) => {
       const dayIdx = new Date(o.createdAt).getDay();
       const dayName = dayNames[dayIdx];
       if (weeklyDataMap[dayName]) {
@@ -108,7 +140,7 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
         },
         orders: {
           total: totalOrders,
-          paid: paidOrders,
+          paid: paidOrdersCount,
           pending: pendingOrders,
           expired: expiredOrders,
           needsReview: needsReviewOrders,
@@ -124,7 +156,7 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
         },
       },
       recentOrders,
-      lowStockProducts: lowStockProducts.slice(0, 5).map((p) => ({
+      lowStockProducts: lowStockProducts.map((p) => ({
         id: p.id,
         name: p.name,
         stock: p.physicalStock,

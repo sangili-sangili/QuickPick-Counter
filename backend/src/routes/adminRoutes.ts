@@ -21,6 +21,7 @@ import {
   getAdminOrders,
   updateAdminOrderStatus,
   simulateAdminOrder,
+  simulateAdminWebhook,
   deleteAdminOrder,
 } from '../controllers/adminOrderController.js';
 import {
@@ -78,6 +79,7 @@ router.delete('/products/:id', deleteAdminProduct);
 router.get('/orders', getAdminOrders);
 router.patch('/orders/:id/status', updateAdminOrderStatus);
 router.post('/orders/simulate', simulateAdminOrder);
+router.post('/orders/simulate-webhook', simulateAdminWebhook);
 router.delete('/orders/:id', deleteAdminOrder);
 
 // 7. Lockers & Solenoid Control

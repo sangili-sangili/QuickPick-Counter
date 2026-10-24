@@ -265,16 +265,23 @@ export const createKioskOrder = async (req: Request, res: Response) => {
     const orderNumber = `ORD${Math.floor(1000 + Math.random() * 9000)}`;
     const expiresAt = new Date(Date.now() + 120 * 1000); // 120 seconds payment window
 
-    // 4. Transaction: Create Order, Reserve Locker, Deduct Physical Stock (Stock Hold)
+    // 4. Transaction: Create Order, Reserve Locker, Deduct Physical Stock Atomically (Stock Hold)
     const result = await prisma.$transaction(async (tx) => {
-      // Deduct stock for hold
+      // Atomic stock deduction: gte condition guarantees zero overselling under high concurrency
       for (const item of items) {
-        await tx.product.update({
-          where: { id: item.productId },
+        const updateResult = await tx.product.updateMany({
+          where: {
+            id: item.productId,
+            physicalStock: { gte: item.quantity },
+          },
           data: {
             physicalStock: { decrement: item.quantity },
           },
         });
+
+        if (updateResult.count === 0) {
+          throw new Error(`INSUFFICIENT_STOCK:${item.productId}`);
+        }
       }
 
       // If paying via wallet immediately
@@ -341,13 +348,21 @@ export const createKioskOrder = async (req: Request, res: Response) => {
       expiresInSeconds: 120,
     });
   } catch (error: any) {
+    if (error.message && error.message.startsWith('INSUFFICIENT_STOCK:')) {
+      const prodId = error.message.split(':')[1];
+      return res.status(400).json({
+        error: `Insufficient stock for product ${prodId}. Units were claimed by a concurrent order.`,
+      });
+    }
     return res.status(500).json({ error: error.message });
   }
 };
 
 /**
  * POST /api/orders/:orderId/pickup-claim
- * Customer claims product pickup at Smart Locker
+ * Customer claims product pickup at Smart Locker:
+ * - Only eligible for PAID orders
+ * - Atomic state transition protects against double claims (HTTP 409 Conflict)
  */
 export const claimKioskPickup = async (req: Request, res: Response) => {
   try {
@@ -361,13 +376,33 @@ export const claimKioskPickup = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Order not found.' });
     }
 
-    await prisma.order.update({
-      where: { id: orderId },
+    if (order.status === 'CLAIMED') {
+      return res.status(409).json({ error: 'Order has already been claimed and dispensed.' });
+    }
+
+    if (order.status !== 'PAID') {
+      return res.status(400).json({
+        error: `Order is not eligible for pickup. Current status: ${order.status}. Must be PAID.`,
+      });
+    }
+
+    // Atomic conditional update ensures exactly one concurrent claim succeeds
+    const updated = await prisma.order.updateMany({
+      where: {
+        id: orderId,
+        status: 'PAID',
+      },
       data: {
         status: 'CLAIMED',
         pickupClaimedAt: new Date(),
       },
     });
+
+    if (updated.count === 0) {
+      return res.status(409).json({
+        error: 'Conflict: Order was already claimed in a simultaneous session.',
+      });
+    }
 
     // Free associated locker back to AVAILABLE
     if (order.lockerNumber) {

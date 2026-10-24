@@ -33,11 +33,16 @@ export async function revertExpiredOrdersAndStock(): Promise<{
 
     for (const order of expiredOrders) {
       await prisma.$transaction(async (tx) => {
-        // 1. Mark order as EXPIRED
-        await tx.order.update({
-          where: { id: order.id },
+        // 1. Atomically transition status from UNPAID to EXPIRED
+        const orderUpdated = await tx.order.updateMany({
+          where: { id: order.id, status: 'UNPAID' },
           data: { status: 'EXPIRED' },
         });
+
+        // If another concurrent cron execution already transitioned this order, skip to prevent double increment
+        if (orderUpdated.count === 0) {
+          return;
+        }
 
         // 2. Revert physicalStock for each order item back into dispenser
         for (const item of order.items) {

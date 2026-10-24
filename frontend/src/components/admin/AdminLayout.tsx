@@ -38,6 +38,7 @@ import {
   getAdminOrdersApi,
   updateAdminOrderStatusApi,
   simulateAdminOrderApi,
+  simulateAdminWebhookApi,
   deleteAdminOrderApi,
   getAdminLockersApi,
   toggleUnlockLockerApi,
@@ -387,20 +388,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     }
   };
 
-  // Webhook test launcher
+  // Real backend signed webhook test launcher
   const handleTriggerWebhookTest = async (orderNumber: string, outcome: 'captured' | 'failed') => {
-    const foundOrder = orders.find((o) => o.orderNumber.toUpperCase() === orderNumber.toUpperCase());
-    if (!foundOrder) {
-      addToast('error', `Order ${orderNumber} not found.`);
-      return;
-    }
-
-    if (outcome === 'captured') {
-      await handleUpdateOrderStatus(foundOrder.id, 'paid');
-      addToast('success', `Simulated Webhook Captured: ${foundOrder.orderNumber} marked PAID!`);
+    const res = await simulateAdminWebhookApi(orderNumber, outcome);
+    if (res.success) {
+      addToast(
+        outcome === 'captured' ? 'success' : 'warning',
+        res.message || `Signed webhook dispatched for #${orderNumber}`
+      );
+      await refreshAdminData();
     } else {
-      await handleUpdateOrderStatus(foundOrder.id, 'needs_review');
-      addToast('warning', `Simulated Webhook Discrepancy: ${foundOrder.orderNumber} flagged!`);
+      addToast('error', res.message || 'Webhook simulation failed.');
     }
   };
 

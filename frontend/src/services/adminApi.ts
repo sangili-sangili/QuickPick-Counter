@@ -335,6 +335,33 @@ export async function deleteAdminOrderApi(id: string): Promise<ApiActionResponse
   }
 }
 
+export async function simulateAdminWebhookApi(
+  orderNumber: string,
+  outcome: 'captured' | 'failed' | 'mismatch'
+): Promise<ApiActionResponse & { eventId?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/admin/orders/simulate-webhook`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ orderNumber, outcome }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success) {
+      return {
+        success: true,
+        message: data.message || `Webhook processed: ${outcome}`,
+        eventId: data.eventId,
+      };
+    }
+    return {
+      success: false,
+      message: data.message || data.error || `Webhook rejected (HTTP ${res.status})`,
+    };
+  } catch (err: any) {
+    return { success: false, message: err.message || 'Network error simulating webhook' };
+  }
+}
+
 // ==========================================
 // 6. Admin Lockers API
 // ==========================================
